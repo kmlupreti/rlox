@@ -6,6 +6,7 @@ use std::{
 };
 
 use crate::scanner::Scanner;
+pub mod error;
 pub mod scanner;
 pub mod token;
 pub fn run_file<P>(path: P)
@@ -34,13 +35,11 @@ pub fn run_prompt() {
     }
 }
 fn run(source: String) {
-    let scanner = Scanner::new(source);
-    let tokens = scanner.scan_tokens();
-    for token in tokens {
-        println!("lexeme: {}", token.to_string())
+    let mut scanner = Scanner::new(source);
+    if let Err(_) = scanner.scan_tokens() {
+        exit(65);
     }
-}
-fn report_error(line: usize, kind: String, msg: String) {
-    eprintln!("[line: {}, Error {} : {}]", line, kind, msg);
-    exit(65);
+    for token in scanner.tokens {
+        println!("token lexeme: {}", token.to_string())
+    }
 }
