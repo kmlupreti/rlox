@@ -26,10 +26,17 @@ impl Scanner {
     pub fn scan_tokens(&mut self) -> Result<&Vec<Token>, ()> {
         while !self.is_at_end() {
             self.start = self.current_index;
-            self.scan_token();
+            if let Err(e) = self.scan_token() {
+                self.has_error = true;
+                report_error(e);
+            }
         }
-        self.add_token(TokenType::Eof, Some(String::from("\0")), LiteralType::Nil);
-
+        self.tokens.push(Token::new(
+            TokenType::Eof,
+            "\0".to_string(),
+            self.line,
+            LiteralType::Nil,
+        ));
         if self.has_error {
             Err(())
         } else {
@@ -37,11 +44,8 @@ impl Scanner {
         }
     }
 
-    fn add_token(&mut self, token_type: TokenType, lexeme: Option<String>, literal: LiteralType) {
-        let lexeme = match lexeme {
-            Some(s) => s,
-            None => self.source[self.current_index - 1].to_string(),
-        };
+    fn add_token(&mut self, token_type: TokenType, literal: LiteralType) {
+        let lexeme = String::from_iter(&self.source[self.start..=self.current_index - 1]);
         self.tokens
             .push(Token::new(token_type, lexeme, self.line, literal));
     }
@@ -64,28 +68,35 @@ impl Scanner {
     fn current_char(&self) -> char {
         self.source[self.current_index]
     }
-    fn scan_token(&mut self) {
+    fn peek(&self) -> char {
+        if self.is_at_end() {
+            '\0'
+        } else {
+            self.current_char()
+        }
+    }
+    fn scan_token(&mut self) -> Result<(), LoxError> {
         let c = self.advance();
         match c {
-            '(' => self.add_token(TokenType::LeftParen, None, LiteralType::Nil),
+            '(' => self.add_token(TokenType::LeftParen, LiteralType::Nil),
 
-            ')' => self.add_token(TokenType::RightParen, None, LiteralType::Nil),
+            ')' => self.add_token(TokenType::RightParen, LiteralType::Nil),
 
-            '{' => self.add_token(TokenType::LeftBrace, None, LiteralType::Nil),
+            '{' => self.add_token(TokenType::LeftBrace, LiteralType::Nil),
 
-            '}' => self.add_token(TokenType::Rightbrace, None, LiteralType::Nil),
+            '}' => self.add_token(TokenType::Rightbrace, LiteralType::Nil),
 
-            '.' => self.add_token(TokenType::Dot, None, LiteralType::Nil),
+            '.' => self.add_token(TokenType::Dot, LiteralType::Nil),
 
-            ';' => self.add_token(TokenType::Comma, None, LiteralType::Nil),
+            ';' => self.add_token(TokenType::Comma, LiteralType::Nil),
 
-            ',' => self.add_token(TokenType::Semicolon, None, LiteralType::Nil),
+            ',' => self.add_token(TokenType::Semicolon, LiteralType::Nil),
 
-            '+' => self.add_token(TokenType::Plus, None, LiteralType::Nil),
+            '+' => self.add_token(TokenType::Plus, LiteralType::Nil),
 
-            '-' => self.add_token(TokenType::Minus, None, LiteralType::Nil),
+            '-' => self.add_token(TokenType::Minus, LiteralType::Nil),
 
-            '*' => self.add_token(TokenType::Star, None, LiteralType::Nil),
+            '*' => self.add_token(TokenType::Star, LiteralType::Nil),
             '\n' => self.line += 1,  // increment current line number
             ' ' | '\t' | '\r' => (), // skip whitespaces
             '/' => {
@@ -95,16 +106,32 @@ impl Scanner {
                         self.current_index += 1
                     }
                 } else {
-                    self.add_token(TokenType::Slash, None, LiteralType::Nil);
+                    self.add_token(TokenType::Slash, LiteralType::Nil);
                 }
+            }
+            '"' => {
+                while self.peek() != '"' && !self.is_at_end() {
+                    if self.peek() == '\n' {
+                        self.line += 1;
+                    }
+                    self.advance();
+                }
+                if self.is_at_end() {
+                    return Err(LoxError::UnterminatedString { line: self.line });
+                }
+                self.advance();
+                let matched_string =
+                    String::from_iter(&self.source[self.start + 1..self.current_index - 1]);
+                self.add_token(TokenType::String, LiteralType::String(matched_string));
             }
             _ => {
                 self.has_error = true;
-                report_error(LoxError::UnexpectedChar {
+                return Err(LoxError::UnexpectedChar {
                     char: c,
                     line: self.line,
                 });
             }
         }
+        Ok(())
     }
 }
