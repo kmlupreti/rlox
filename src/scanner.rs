@@ -82,6 +82,66 @@ impl Scanner {
             self.source[self.current_index + 1]
         }
     }
+    fn match_string(&mut self) -> Result<(), LoxError> {
+        while self.peek() != '"' && !self.is_at_end() {
+            if self.peek() == '\n' {
+                self.line += 1;
+            }
+            self.advance(); // consume closing "
+        }
+        if self.is_at_end() {
+            return Err(LoxError::UnterminatedString { line: self.line });
+        }
+        self.advance();
+        let matched_string =
+            String::from_iter(&self.source[self.start + 1..self.current_index - 1]);
+        self.add_token(TokenType::String, LiteralType::String(matched_string));
+        Ok(())
+    }
+    fn match_digits(&mut self) -> Result<(), LoxError> {
+        while self.current_char().is_ascii_digit() {
+            self.advance();
+        }
+        if self.current_char() == '.' && self.peek_next().is_ascii_digit() {
+            self.advance(); // consume decimal point
+            while self.peek().is_ascii_digit() {
+                self.advance();
+            }
+        }
+        let matched_number: f64 = String::from_iter(&self.source[self.start..self.current_index])
+            .parse()
+            .unwrap();
+        self.add_token(TokenType::Number, LiteralType::Number(matched_number));
+        Ok(())
+    }
+    fn match_keywords(&mut self) -> Result<(), LoxError> {
+        while self.peek().is_ascii_alphanumeric() || self.peek() == '_' {
+            self.advance();
+        }
+        let text = String::from_iter(&self.source[self.start..=self.current_index - 1]);
+        let token_type = match text.as_str() {
+            "and" => TokenType::And,
+            "class" => TokenType::Class,
+            "else" => TokenType::Else,
+            "false" => TokenType::False,
+            "fun" => TokenType::Fun,
+            "for" => TokenType::For,
+            "if" => TokenType::If,
+            "nil" => TokenType::Nil,
+            "or" => TokenType::Or,
+            "print" => TokenType::Print,
+            "return" => TokenType::Return,
+            "super" => TokenType::Super,
+            "this" => TokenType::This,
+            "true" => TokenType::True,
+            "var" => TokenType::Var,
+            "while" => TokenType::While,
+            "eof" => TokenType::Eof,
+            _ => TokenType::Identifier,
+        };
+        self.add_token(token_type, LiteralType::Nil);
+        Ok(())
+    }
     fn scan_token(&mut self) -> Result<(), LoxError> {
         let c = self.advance();
         match c {
@@ -116,64 +176,9 @@ impl Scanner {
                     self.add_token(TokenType::Slash, LiteralType::Nil);
                 }
             }
-            '"' => {
-                while self.peek() != '"' && !self.is_at_end() {
-                    if self.peek() == '\n' {
-                        self.line += 1;
-                    }
-                    self.advance();
-                }
-                if self.is_at_end() {
-                    return Err(LoxError::UnterminatedString { line: self.line });
-                }
-                self.advance();
-                let matched_string =
-                    String::from_iter(&self.source[self.start + 1..self.current_index - 1]);
-                self.add_token(TokenType::String, LiteralType::String(matched_string));
-            }
-            '0'..='9' => {
-                while self.current_char().is_ascii_digit() {
-                    self.advance();
-                }
-                if self.current_char() == '.' && self.peek_next().is_ascii_digit() {
-                    self.advance(); // consume decimal point
-                    while self.peek().is_ascii_digit() {
-                        self.advance();
-                    }
-                }
-                let matched_number: f64 =
-                    String::from_iter(&self.source[self.start..self.current_index])
-                        .parse()
-                        .unwrap();
-                self.add_token(TokenType::Number, LiteralType::Number(matched_number));
-            }
-            'a'..='z' | 'A'..='Z' | '_' => {
-                while self.peek().is_ascii_alphanumeric() || self.peek() == '_' {
-                    self.advance();
-                }
-                let text = String::from_iter(&self.source[self.start..=self.current_index - 1]);
-                let token_type = match text.as_str() {
-                    "and" => TokenType::And,
-                    "class" => TokenType::Class,
-                    "else" => TokenType::Else,
-                    "false" => TokenType::False,
-                    "fun" => TokenType::Fun,
-                    "for" => TokenType::For,
-                    "if" => TokenType::If,
-                    "nil" => TokenType::Nil,
-                    "or" => TokenType::Or,
-                    "print" => TokenType::Print,
-                    "return" => TokenType::Return,
-                    "super" => TokenType::Super,
-                    "this" => TokenType::This,
-                    "true" => TokenType::True,
-                    "var" => TokenType::Var,
-                    "while" => TokenType::While,
-                    "eof" => TokenType::Eof,
-                    _ => TokenType::Identifier,
-                };
-                self.add_token(token_type, LiteralType::Nil);
-            }
+            '"' => self.match_string()?,
+            '0'..='9' => self.match_digits()?,
+            'a'..='z' | 'A'..='Z' | '_' => self.match_keywords()?,
             _ => {
                 return Err(LoxError::UnexpectedChar {
                     char: c,
