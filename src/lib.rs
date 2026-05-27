@@ -7,6 +7,7 @@ use std::{
 
 use crate::scanner::Scanner;
 pub mod error;
+pub mod parser;
 pub mod scanner;
 pub fn run_file<P>(path: P)
 where
