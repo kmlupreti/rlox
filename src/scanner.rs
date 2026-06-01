@@ -1,8 +1,8 @@
-pub mod token;
-pub mod token_type;
-use crate::error::{LoxError, report_error};
-use token::Token;
-use token_type::TokenType;
+use crate::{
+    error::{LoxError, report_error},
+    token::Token,
+    token_type::TokenType,
+};
 pub struct Scanner {
     source: Vec<char>,
     tokens: Vec<Token>,

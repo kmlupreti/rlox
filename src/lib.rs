@@ -5,10 +5,13 @@ use std::{
     process::exit,
 };
 
-use crate::scanner::Scanner;
 pub mod error;
+pub mod expresssion;
 pub mod parser;
 pub mod scanner;
+pub mod token;
+pub mod token_type;
+
 pub fn run_file<P>(path: P)
 where
     P: AsRef<Path>,
@@ -35,7 +38,7 @@ pub fn run_prompt() {
     }
 }
 fn run(source: String) {
-    let mut scanner = Scanner::new(source);
+    let mut scanner = scanner::Scanner::new(source);
     match scanner.scan_tokens() {
         Ok(tokens) => {
             for t in tokens {

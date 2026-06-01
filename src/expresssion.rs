@@ -1,4 +1,4 @@
-use crate::scanner::token::Token;
+use crate::token::Token;
 
 #[derive(Debug)]
 pub enum Expr {
@@ -22,21 +22,16 @@ pub enum Expr {
 impl Expr {
     pub fn accept(&self) -> String {
         match &self {
-            Self::Literal { value } => value.lexeme(),
+            Self::Literal { value } => value.lexeme.clone(),
             Self::Unary { operator, right } => {
-                format!("({} {})", operator.lexeme(), right.accept())
+                format!("({} {})", operator.lexeme, right.accept())
             }
             Self::Binary {
                 left,
                 operator,
                 right,
             } => {
-                format!(
-                    "({} {} {})",
-                    operator.lexeme(),
-                    left.accept(),
-                    right.accept()
-                )
+                format!("({} {} {})", operator.lexeme, left.accept(), right.accept())
             }
             Self::Grouping { expr } => {
                 format!("(group {})", expr.accept())

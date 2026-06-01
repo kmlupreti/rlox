@@ -1,11 +1,12 @@
-use crate::scanner::TokenType;
 use std::fmt::Display;
+
+use crate::token_type::TokenType;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Token {
     pub token_type: TokenType,
     pub lexeme: String,
-    line: usize,
+    pub line: usize,
 }
 impl Token {
     pub fn new(token_type: TokenType, lexeme: String, line: usize) -> Self {
