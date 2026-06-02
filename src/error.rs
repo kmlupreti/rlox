@@ -17,7 +17,7 @@ pub fn report_error(e: LoxError) {
             if token.token_type == TokenType::Eof {
                 eprintln!("[line: {}] at end {}", token.line, msg);
             } else {
-                eprintln!("[line: {}] at {} {}", token.line, token.lexeme, msg);
+                eprintln!("[line: {}] at '{}': {}", token.line, token.lexeme, msg);
             }
         }
     }
