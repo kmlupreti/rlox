@@ -196,6 +196,90 @@ impl Expr {
                             })
                         }
                     }
+                    TokenType::Greater => {
+                        let n1 = match parse_num(&left) {
+                            Ok(n) => n,
+                            Err(_) => {
+                                return Err(LoxError::RuntimeError {
+                                    line,
+                                    msg: format!("failed to parse '{left}' into number"),
+                                });
+                            }
+                        };
+                        let n2 = match parse_num(&right) {
+                            Ok(n) => n,
+                            Err(_) => {
+                                return Err(LoxError::RuntimeError {
+                                    line,
+                                    msg: format!("failed to parse '{right}' into number"),
+                                });
+                            }
+                        };
+                        Ok(LoxValue::Boolean(n1 > n2))
+                    }
+                    TokenType::GreaterEqual => {
+                        let n1 = match parse_num(&left) {
+                            Ok(n) => n,
+                            Err(_) => {
+                                return Err(LoxError::RuntimeError {
+                                    line,
+                                    msg: format!("failed to parse '{left}' into number"),
+                                });
+                            }
+                        };
+                        let n2 = match parse_num(&right) {
+                            Ok(n) => n,
+                            Err(_) => {
+                                return Err(LoxError::RuntimeError {
+                                    line,
+                                    msg: format!("failed to parse '{right}' into number"),
+                                });
+                            }
+                        };
+                        Ok(LoxValue::Boolean(n1 >= n2))
+                    }
+                    TokenType::Less => {
+                        let n1 = match parse_num(&left) {
+                            Ok(n) => n,
+                            Err(_) => {
+                                return Err(LoxError::RuntimeError {
+                                    line,
+                                    msg: format!("failed to parse '{left}' into number"),
+                                });
+                            }
+                        };
+                        let n2 = match parse_num(&right) {
+                            Ok(n) => n,
+                            Err(_) => {
+                                return Err(LoxError::RuntimeError {
+                                    line,
+                                    msg: format!("failed to parse '{right}' into number"),
+                                });
+                            }
+                        };
+                        Ok(LoxValue::Boolean(n1 < n2))
+                    }
+                    TokenType::LessEqual => {
+                        let n1 = match parse_num(&left) {
+                            Ok(n) => n,
+                            Err(_) => {
+                                return Err(LoxError::RuntimeError {
+                                    line,
+                                    msg: format!("failed to parse '{left}' into number"),
+                                });
+                            }
+                        };
+                        let n2 = match parse_num(&right) {
+                            Ok(n) => n,
+                            Err(_) => {
+                                return Err(LoxError::RuntimeError {
+                                    line,
+                                    msg: format!("failed to parse '{right}' into number"),
+                                });
+                            }
+                        };
+                        Ok(LoxValue::Boolean(n1 <= n2))
+                    }
                     _ => Err(LoxError::RuntimeError {
                         line,
                         msg: format!("Illegal binary operator '{lexeme}'"),
@@ -206,7 +290,7 @@ impl Expr {
     }
 }
 
-pub fn parse_num(v: &LoxValue) -> Result<f64, ()> {
+fn parse_num(v: &LoxValue) -> Result<f64, ()> {
     match v {
         LoxValue::Number(n) => Ok(*n),
         LoxValue::String(s) => match s.parse::<f64>() {
