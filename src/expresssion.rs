@@ -48,19 +48,6 @@ impl Display for Expr {
 }
 
 impl Expr {
-    pub fn interpret(&self) -> Result<(), ()> {
-        match self.evaluate() {
-            Ok(v) => {
-                println!("{}", v);
-                Ok(())
-            }
-            Err(e) => {
-                eprintln!("{e}");
-                Err(())
-            }
-        }
-    }
-
     pub fn evaluate(&self) -> Result<LoxValue, LoxError> {
         match self {
             Self::Literal { value } => match value.token_type {
