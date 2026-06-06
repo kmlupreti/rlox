@@ -6,7 +6,7 @@ pub enum Stmt {
     PrintStmt { expr: Expr },
 }
 impl Stmt {
-    pub fn interpret(&self) -> Result<(), LoxError> {
+    pub fn execute(&self) -> Result<(), LoxError> {
         match self {
             Self::ExprStmt { expr } => {
                 expr.evaluate()?;

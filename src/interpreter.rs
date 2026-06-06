@@ -7,9 +7,9 @@ impl Interpreter {
     pub fn new(statements: Vec<Stmt>) -> Self {
         Self { statements }
     }
-    pub fn run(&self) -> Result<(), LoxError> {
+    pub fn interpret(&self) -> Result<(), LoxError> {
         for statement in &self.statements {
-            statement.interpret()?;
+            statement.execute()?;
         }
         Ok(())
     }

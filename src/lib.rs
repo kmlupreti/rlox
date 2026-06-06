@@ -37,7 +37,7 @@ where
             }
         };
         let interpreter = Interpreter::new(statements);
-        match interpreter.run() {
+        match interpreter.interpret() {
             Ok(_) => (),
             Err(e) => {
                 eprintln!("{e}");
@@ -72,7 +72,7 @@ pub fn run_prompt() -> io::Result<()> {
             }
         };
         let interpreter = Interpreter::new(statements);
-        match interpreter.run() {
+        match interpreter.interpret() {
             Ok(_) => (),
             Err(e) => eprintln!("{e}"),
         }
