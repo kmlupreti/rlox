@@ -34,7 +34,8 @@ where
         let statements = parser.parse();
         match interpreter.interpret(statements) {
             Ok(_) => (),
-            Err(_) => {
+            Err(e) => {
+                eprintln!("{e}");
                 exit(70);
             }
         }
@@ -56,7 +57,7 @@ pub fn run_prompt() -> io::Result<()> {
         let mut scanner = scanner::Scanner::new(&line);
         let tokens = match scanner.scan_tokens() {
             Ok(t) => t,
-            Err(_) => exit(65),
+            Err(_) => continue,
         };
         let mut parser = Parser::new(tokens.clone());
         let statements = parser.parse();
