@@ -18,7 +18,7 @@ impl Environment {
             Some(v) => Ok(v.clone()),
             None => Err(LoxError::RuntimeError {
                 line: name.line,
-                msg: format!("unknown variable '{}' found", name.lexeme),
+                msg: format!("undeclared variable '{}' found", name.lexeme),
             }),
         }
     }
@@ -29,7 +29,7 @@ impl Environment {
         } else {
             Err(LoxError::RuntimeError {
                 line: name.line,
-                msg: format!("unknown variable '{}' found", name.lexeme),
+                msg: format!("unable to assign to undeclared variable '{}'", name.lexeme),
             })
         }
     }
