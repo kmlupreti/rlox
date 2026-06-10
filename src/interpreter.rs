@@ -164,7 +164,7 @@ impl Interpreter {
                             Err(LoxError::RuntimeError {
                                 line,
                                 msg: format!(
-                                    "failed to add/concat as operands should be both number or string"
+                                    "failed to add/concat as both operands should either number or string"
                                 ),
                             })
                         }
@@ -257,7 +257,7 @@ impl Interpreter {
                     TokenType::BangEqual => Ok(LoxValue::Boolean(left != right)),
                     _ => Err(LoxError::RuntimeError {
                         line,
-                        msg: format!("Illegal binary operator '{lexeme}'"),
+                        msg: format!("uknown binary operator '{lexeme}' found"),
                     }),
                 }
             }
