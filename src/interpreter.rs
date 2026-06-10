@@ -30,8 +30,9 @@ impl Interpreter {
                     let previous = self.environment.clone();
                     let new = Environment::new_enclosing(self.environment.clone());
                     self.environment = new;
-                    self.interpret(statements)?;
+                    let result = self.interpret(statements);
                     self.environment = previous;
+                    result?
                 }
             }
         }
