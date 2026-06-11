@@ -30,13 +30,16 @@ where
     };
     let mut parser = Parser::new(tokens.clone());
     let statements = parser.parse();
-    match interpreter.interpret(statements) {
-        Ok(_) => Ok(()),
-        Err(e) => {
-            eprintln!("{e}");
-            exit(70);
+    for s in statements {
+        match interpreter.interpret(s) {
+            Ok(_) => (),
+            Err(e) => {
+                eprintln!("{e}");
+                exit(70);
+            }
         }
     }
+    Ok(())
 }
 pub fn run_prompt() -> io::Result<()> {
     let mut stdin = io::stdin().lock();
@@ -56,9 +59,11 @@ pub fn run_prompt() -> io::Result<()> {
         };
         let mut parser = Parser::new(tokens.clone());
         let statements = parser.parse();
-        match interpreter.interpret(statements) {
-            Ok(_) => (),
-            Err(e) => eprintln!("{e}"),
+        for s in statements {
+            match interpreter.interpret(s) {
+                Ok(_) => (),
+                Err(e) => eprintln!("{e}"),
+            }
         }
     }
     Ok(())

@@ -1,6 +1,10 @@
 use crate::{
-    environment::Environment, error::LoxError, expresssion::Expr, lox_value::LoxValue,
-    statement::Stmt, token_type::TokenType,
+    environment::Environment,
+    error::LoxError,
+    expresssion::Expr,
+    lox_value::LoxValue::{self, Boolean},
+    statement::Stmt,
+    token_type::TokenType,
 };
 
 pub struct Interpreter {
@@ -12,30 +16,51 @@ impl Interpreter {
             environment: Environment::new(),
         }
     }
-    pub fn interpret(&mut self, statements: Vec<Stmt>) -> Result<(), LoxError> {
-        for statement in statements {
-            match statement {
-                Stmt::ExprStmt { expr } => {
-                    self.evaluate(expr)?;
+    pub fn interpret(&mut self, statement: Stmt) -> Result<(), LoxError> {
+        match statement {
+            Stmt::ExprStmt { expr } => {
+                self.evaluate(expr)?;
+            }
+            Stmt::PrintStmt { expr } => {
+                let expr_out = self.evaluate(expr)?;
+                println!("{expr_out}");
+            }
+            Stmt::VarDeclStmt { name, initializer } => {
+                let value = self.evaluate(initializer)?;
+                self.environment.define(name.lexeme, value);
+            }
+            Stmt::BlockStmt { statements } => {
+                let previous = self.environment.clone();
+                let new = Environment::new_enclosing(self.environment.clone());
+                self.environment = new;
+                let mut result = Ok(());
+                for s in statements {
+                    result = self.interpret(s);
+                    if result.is_err() {
+                        break;
+                    };
                 }
-                Stmt::PrintStmt { expr } => {
-                    let expr_out = self.evaluate(expr)?;
-                    println!("{expr_out}");
-                }
-                Stmt::VarDeclStmt { name, initializer } => {
-                    let value = self.evaluate(initializer)?;
-                    self.environment.define(name.lexeme, value);
-                }
-                Stmt::BlockStmt { statements } => {
-                    let previous = self.environment.clone();
-                    let new = Environment::new_enclosing(self.environment.clone());
-                    self.environment = new;
-                    let result = self.interpret(statements);
-                    self.environment = previous;
-                    result?
+                self.environment = previous;
+                result?
+            }
+            Stmt::IfStmt {
+                condition,
+                then_branch,
+                else_branch,
+            } => {
+                let condition = self.evaluate(condition)?;
+                if let Boolean(is_condition_true) = condition {
+                    if is_condition_true {
+                        self.interpret(*then_branch)?
+                    } else {
+                        if let Some(then_stmt) = else_branch {
+                            self.interpret(*then_stmt)?
+                        }
+                    }
                 }
             }
         }
+
         Ok(())
     }
 
