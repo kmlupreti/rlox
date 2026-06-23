@@ -67,11 +67,21 @@ impl Parser {
             self.block_stmt()
         } else if self.check(TokenType::If) {
             self.if_stmt()
+        } else if self.check(TokenType::While) {
+            self.while_stmt()
         } else {
             self.expr_stmt()
         }
     }
 
+    fn while_stmt(&mut self) -> ParserResult<Stmt> {
+        self.advance();
+        self.consume(TokenType::LeftParen, "missing '('")?;
+        let condition = self.expression()?;
+        self.consume(TokenType::RightParen, "missing ')'")?;
+        let body = Box::new(self.statement()?);
+        Ok(Stmt::WhileStmt { condition, body })
+    }
     fn if_stmt(&mut self) -> ParserResult<Stmt> {
         self.advance();
         self.consume(TokenType::LeftParen, "missing '('")?;
