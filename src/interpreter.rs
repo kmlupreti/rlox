@@ -1,14 +1,22 @@
 use crate::{
-    environment::Environment, error::LoxError, expresssion::Expr, lox_value::LoxValue,
-    statement::Stmt, token_type::TokenType,
+    callable::{Callable, LoxCallable},
+    environment::Environment,
+    error::LoxError,
+    expresssion::Expr,
+    function::Function,
+    lox_value::LoxValue,
+    statement::Stmt,
+    token_type::TokenType,
 };
 
 pub struct Interpreter {
-    environment: Environment,
+    pub globals: Environment,
+    pub environment: Environment,
 }
 impl Interpreter {
     pub fn new() -> Self {
         Self {
+            globals: Environment::new(),
             environment: Environment::new(),
         }
     }
@@ -59,6 +67,12 @@ impl Interpreter {
                 while self.evaluate(condition.clone())?.is_true() {
                     self.interpret(*body.clone())?;
                 }
+            }
+            Stmt::FuncStmt { name, params, body } => {
+                self.globals.define(
+                    name.lexeme.clone(),
+                    LoxValue::Callable(Callable::Func(Function { name, params, body })),
+                );
             }
         }
 
@@ -292,7 +306,10 @@ impl Interpreter {
                     }),
                 }
             }
-            Expr::Variable { name } => self.environment.get(name),
+            Expr::Variable { name } => match self.globals.get(name.clone()) {
+                Ok(v) => Ok(v),
+                Err(_) => self.environment.get(name),
+            },
             Expr::Assign { name, value } => {
                 let value = self.evaluate(*value)?;
                 self.environment.assign(name, value)
@@ -330,6 +347,25 @@ impl Interpreter {
                         line: operator.line,
                         msg: format!("'{}' is not a valid logical operator", operator.lexeme),
                     }),
+                }
+            }
+            Expr::Call {
+                callee,
+                paren,
+                arguments,
+            } => {
+                let callee = self.evaluate(*callee)?;
+                let mut args = vec![];
+                for arg in arguments {
+                    args.push(self.evaluate(arg)?);
+                }
+                if let LoxValue::Callable(callable) = callee {
+                    Ok(callable.call(self, args)?)
+                } else {
+                    return Err(LoxError::RuntimeError {
+                        line: paren.line,
+                        msg: "can only call function and clases".to_string(),
+                    });
                 }
             }
         }
