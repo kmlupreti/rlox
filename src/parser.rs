@@ -1,3 +1,5 @@
+use std::str;
+
 use crate::{
     error::LoxError, expresssion::Expr, statement::Stmt, token::Token, token_type::TokenType,
 };
@@ -22,6 +24,8 @@ impl Parser {
     fn declaration(&mut self) -> Stmt {
         let stmt = if self.check(TokenType::Var) {
             self.var_declaration()
+        } else if self.check(TokenType::Fun) {
+            self.function("function")
         } else {
             self.statement()
         };
@@ -43,9 +47,49 @@ impl Parser {
         }
     }
 
+    fn function(&mut self, kind: &str) -> ParserResult<Stmt> {
+        self.advance();
+        let name = self.consume(TokenType::Identifier, format!("expect {} name", kind))?;
+        self.consume(
+            TokenType::LeftParen,
+            String::from("expect '(' after {kind} name"),
+        )?;
+        let mut params = vec![];
+        if !self.check(TokenType::RightParen) {
+            params = self.parameters()?;
+        }
+        self.consume(
+            TokenType::RightParen,
+            String::from("expect ')' after parameters"),
+        )?;
+        if let Stmt::BlockStmt { statements } = self.block_stmt()? {
+            Ok(Stmt::FuncStmt {
+                name,
+                params,
+                body: statements,
+            })
+        } else {
+            Err(LoxError::RuntimeError {
+                line: name.line,
+                msg: String::from("function body not found"),
+            })
+        }
+    }
+    fn parameters(&mut self) -> ParserResult<Vec<Token>> {
+        let mut params = vec![];
+        params.push(self.consume(TokenType::Identifier, String::from("expected a parameter"))?);
+        while self.check(TokenType::Comma) {
+            self.advance();
+            params.push(self.advance().clone());
+        }
+        Ok(params)
+    }
     fn var_declaration(&mut self) -> ParserResult<Stmt> {
         self.advance();
-        let name = self.consume(TokenType::Identifier, "expected variable name")?;
+        let name = self.consume(
+            TokenType::Identifier,
+            String::from("expected variable name"),
+        )?;
         let mut initializer = Expr::Literal {
             value: Token {
                 token_type: TokenType::Nil,
@@ -57,7 +101,10 @@ impl Parser {
             self.advance();
             initializer = self.expression()?;
         }
-        self.consume(TokenType::Semicolon, "expected ';' after value")?;
+        self.consume(
+            TokenType::Semicolon,
+            String::from("expected ';' after value"),
+        )?;
         Ok(Stmt::VarDeclStmt { name, initializer })
     }
     fn statement(&mut self) -> ParserResult<Stmt> {
@@ -78,7 +125,7 @@ impl Parser {
 
     fn for_stmt(&mut self) -> ParserResult<Stmt> {
         self.advance();
-        self.consume(TokenType::LeftParen, "missing '('")?;
+        self.consume(TokenType::LeftParen, String::from("missing '('"))?;
         let initializer = if self.check(TokenType::Var) {
             Some(self.var_declaration()?)
         } else if self.check(TokenType::Semicolon) {
@@ -99,13 +146,16 @@ impl Parser {
                 },
             }
         };
-        self.consume(TokenType::Semicolon, "expected ';'  after loop condition")?;
+        self.consume(
+            TokenType::Semicolon,
+            String::from("expected ';'  after loop condition"),
+        )?;
         let increment = if !self.check(TokenType::RightParen) {
             Some(self.expression()?)
         } else {
             None
         };
-        self.consume(TokenType::RightParen, "missing ')'")?;
+        self.consume(TokenType::RightParen, String::from("missing ')'"))?;
         let mut body = self.statement()?;
         if let Some(increment) = increment {
             if let Stmt::BlockStmt { mut statements } = body {
@@ -132,17 +182,17 @@ impl Parser {
     }
     fn while_stmt(&mut self) -> ParserResult<Stmt> {
         self.advance();
-        self.consume(TokenType::LeftParen, "missing '('")?;
+        self.consume(TokenType::LeftParen, String::from("missing '('"))?;
         let condition = self.expression()?;
-        self.consume(TokenType::RightParen, "missing ')'")?;
+        self.consume(TokenType::RightParen, String::from("missing ')'"))?;
         let body = Box::new(self.statement()?);
         Ok(Stmt::WhileStmt { condition, body })
     }
     fn if_stmt(&mut self) -> ParserResult<Stmt> {
         self.advance();
-        self.consume(TokenType::LeftParen, "missing '('")?;
+        self.consume(TokenType::LeftParen, String::from("missing '('"))?;
         let condition = self.expression()?;
-        self.consume(TokenType::RightParen, "missing ')'")?;
+        self.consume(TokenType::RightParen, String::from("missing ')'"))?;
         let then_branch = Box::new(self.statement()?);
         let mut else_branch = None;
         if self.check(TokenType::Else) {
@@ -156,14 +206,20 @@ impl Parser {
         })
     }
     fn print_stmt(&mut self) -> ParserResult<Stmt> {
-        self.advance(); // consume print token
+        self.advance(); // consume String::from(print )token
         let expr = self.expression()?;
-        self.consume(TokenType::Semicolon, "expected ';' after value")?;
+        self.consume(
+            TokenType::Semicolon,
+            String::from("expected ';' after value"),
+        )?;
         Ok(Stmt::PrintStmt { expr })
     }
     fn expr_stmt(&mut self) -> ParserResult<Stmt> {
         let expr = self.expression()?;
-        self.consume(TokenType::Semicolon, "expected ';' after value")?;
+        self.consume(
+            TokenType::Semicolon,
+            String::from("expected ';' after value"),
+        )?;
         Ok(Stmt::ExprStmt { expr })
     }
     fn block_stmt(&mut self) -> ParserResult<Stmt> {
@@ -174,7 +230,7 @@ impl Parser {
         }
         self.consume(
             TokenType::Rightbrace,
-            "block is not closed as closing brace '}' is missing",
+            String::from("block is not closed as closing brace '}' is missing"),
         )?;
         Ok(Stmt::BlockStmt { statements })
     }
@@ -294,8 +350,47 @@ impl Parser {
             let right = Box::new(self.unary()?);
             Ok(Expr::Unary { operator, right })
         } else {
-            self.primary()
+            self.call()
         }
+    }
+    fn call(&mut self) -> ParserResult<Expr> {
+        let mut expr = self.primary()?;
+        while self.check(TokenType::LeftParen) {
+            let paren;
+            let mut arguments = vec![];
+            self.advance();
+            if !self.check(TokenType::RightParen) {
+                arguments = self.arguments()?;
+                paren = self.consume(
+                    TokenType::RightParen,
+                    String::from("expected ')' after function arguments"),
+                )?;
+            } else {
+                paren = self.peek().clone();
+                self.advance();
+            }
+            expr = Expr::Call {
+                callee: Box::new(expr),
+                paren,
+                arguments,
+            };
+        }
+        Ok(expr)
+    }
+    fn arguments(&mut self) -> ParserResult<Vec<Expr>> {
+        let mut arguments = vec![];
+        arguments.push(self.expression()?);
+        while self.check(TokenType::Comma) {
+            if arguments.len() >= 255 {
+                return Err(LoxError::RuntimeError {
+                    line: self.peek().line,
+                    msg: "can't have more than 255 arguments".to_string(),
+                });
+            }
+            self.advance();
+            arguments.push(self.expression()?);
+        }
+        Ok(arguments)
     }
     fn primary(&mut self) -> ParserResult<Expr> {
         match self.peek().token_type {
@@ -308,7 +403,10 @@ impl Parser {
             TokenType::LeftParen => {
                 self.advance();
                 let expr = Box::new(self.expression()?);
-                self.consume(TokenType::RightParen, "expected ')' after expression")?;
+                self.consume(
+                    TokenType::RightParen,
+                    String::from("expected ')' after expression"),
+                )?;
                 Ok(Expr::Grouping { expr })
             }
             TokenType::Identifier => Ok(Expr::Variable {
@@ -316,7 +414,7 @@ impl Parser {
             }),
             _ => Err(LoxError::ParseError {
                 token: self.peek().clone(),
-                msg: "unexpected token found",
+                msg: String::from("unexpected token found"),
             }),
         }
     }
@@ -351,7 +449,7 @@ impl Parser {
         }
         false
     }
-    fn consume(&mut self, token_type: TokenType, error_msg: &'static str) -> ParserResult<Token> {
+    fn consume(&mut self, token_type: TokenType, error_msg: String) -> ParserResult<Token> {
         if self.check(token_type) {
             Ok(self.advance().clone())
         } else {
