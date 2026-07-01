@@ -1,3 +1,5 @@
+use std::time::{SystemTime, UNIX_EPOCH};
+
 use crate::{
     environment::Environment, error::LoxError, function::Function, interpreter::Interpreter,
     lox_value::LoxValue, statement::Stmt,
@@ -25,23 +27,39 @@ impl LoxCallable for Callable {
     ) -> Result<LoxValue, LoxError> {
         match self {
             Self::Func(function) => {
-                let previous_environment = interpreter.globals.clone();
-                let mut environment = Environment::new_enclosing(interpreter.globals.clone());
+                let previous_globals = interpreter.globals.clone();
+                let mut new_globals = Environment::new_enclosing(interpreter.globals.clone());
                 for i in 0..function.params.len() {
-                    environment.define(function.params[i].lexeme.clone(), args[i].clone());
+                    new_globals.define(function.params[i].clone(), args[i].clone());
                 }
-                interpreter.globals = environment;
-                interpreter.interpret(Stmt::BlockStmt {
-                    statements: function.body.clone(),
-                })?;
-                interpreter.globals = previous_environment;
-                Ok(LoxValue::Null)
+                interpreter.globals = new_globals;
+                let ret_value = if function.is_user_defined {
+                    interpreter.interpret(Stmt::BlockStmt {
+                        statements: function.body.clone(),
+                    })?;
+                    Ok(LoxValue::Null)
+                } else {
+                    match function.name.as_str() {
+                        "clock" => Ok(LoxValue::Number(
+                            SystemTime::now()
+                                .duration_since(UNIX_EPOCH)
+                                .unwrap()
+                                .as_millis() as f64,
+                        )),
+                        unknown_function => Err(LoxError::MiscError {
+                            msg: format!("unknown built-in function '{}' called", unknown_function),
+                        }),
+                    }
+                };
+                interpreter.globals = previous_globals;
+                ret_value
             }
             Self::Class => {
                 todo!()
             }
         }
     }
+
     fn arity(&self) -> usize {
         match self {
             Self::Func(function) => function.params.len(),
