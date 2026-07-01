@@ -121,11 +121,29 @@ impl Parser {
             self.while_stmt()
         } else if self.check(TokenType::For) {
             self.for_stmt()
+        } else if self.check(TokenType::Return) {
+            self.return_stmt()
         } else {
             self.expr_stmt()
         }
     }
 
+    fn return_stmt(&mut self) -> ParserResult<Stmt> {
+        self.advance();
+        let value = if !self.check(TokenType::Semicolon) {
+            Some(self.expression()?)
+        } else {
+            None
+        };
+        self.consume(
+            TokenType::Semicolon,
+            String::from("expected ';' after value"),
+        )?;
+        Ok(Stmt::ReturnStmt {
+            keyword: self.peek().clone(),
+            value,
+        })
+    }
     fn for_stmt(&mut self) -> ParserResult<Stmt> {
         self.advance();
         self.consume(TokenType::LeftParen, String::from("missing '('"))?;
