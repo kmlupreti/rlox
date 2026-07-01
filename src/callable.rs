@@ -33,11 +33,14 @@ impl LoxCallable for Callable {
                     new_globals.define(function.params[i].clone(), args[i].clone());
                 }
                 interpreter.globals = new_globals;
-                let ret_value = if function.is_user_defined {
-                    interpreter.interpret(Stmt::BlockStmt {
+                let return_value = if function.is_user_defined {
+                    match interpreter.interpret(Stmt::BlockStmt {
                         statements: function.body.clone(),
-                    })?;
-                    Ok(LoxValue::Null)
+                    }) {
+                        Ok(()) => Ok(LoxValue::Null),
+                        Err(LoxError::Return { line: _, value }) => Ok(value),
+                        Err(e) => Err(e),
+                    }
                 } else {
                     match function.name.as_str() {
                         "clock" => Ok(LoxValue::Number(
@@ -52,7 +55,7 @@ impl LoxCallable for Callable {
                     }
                 };
                 interpreter.globals = previous_globals;
-                ret_value
+                return_value
             }
             Self::Class => {
                 todo!()
