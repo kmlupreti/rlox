@@ -15,10 +15,24 @@ pub struct Interpreter {
 }
 impl Interpreter {
     pub fn new() -> Self {
-        Self {
+        let mut interpreter = Self {
             globals: Environment::new(),
             environment: Environment::new(),
-        }
+        };
+        interpreter.define_builtin_function("clock", None);
+        interpreter
+    }
+    fn define_builtin_function(&mut self, name: &str, params: Option<Vec<&str>>) {
+        let params = params.unwrap_or(vec![]);
+        self.globals.define(
+            String::from(name),
+            LoxValue::Callable(Callable::Func(Function {
+                name: String::from(name),
+                is_user_defined: false,
+                params: params.iter().map(|s| String::from(*s)).collect(),
+                body: vec![],
+            })),
+        );
     }
     pub fn interpret(&mut self, statement: Stmt) -> Result<(), LoxError> {
         match statement {
@@ -70,8 +84,13 @@ impl Interpreter {
             }
             Stmt::FuncStmt { name, params, body } => {
                 self.globals.define(
-                    name.lexeme.clone(),
-                    LoxValue::Callable(Callable::Func(Function { name, params, body })),
+                    name.clone(),
+                    LoxValue::Callable(Callable::Func(Function {
+                        name: name,
+                        is_user_defined: true,
+                        params,
+                        body,
+                    })),
                 );
             }
         }
