@@ -62,18 +62,16 @@ impl Parser {
             TokenType::RightParen,
             String::from("expect ')' after parameters"),
         )?;
-        if let Stmt::BlockStmt { statements } = self.block_stmt()? {
-            Ok(Stmt::FuncStmt {
-                name: name.lexeme,
-                params,
-                body: statements,
-            })
-        } else {
-            Err(LoxError::RuntimeError {
-                line: name.line,
-                msg: String::from("function body not found"),
-            })
-        }
+
+        let statements = match self.statement()? {
+            Stmt::BlockStmt { statements } => statements,
+            other_statement => vec![other_statement],
+        };
+        Ok(Stmt::FuncStmt {
+            name: name.lexeme,
+            params,
+            body: statements,
+        })
     }
     fn parameters(&mut self) -> ParserResult<Vec<String>> {
         let mut params = vec![];
