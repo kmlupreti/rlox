@@ -1,4 +1,5 @@
 use crate::{
+    builtin_functions::declare_builtin_functions,
     callable::{Callable, LoxCallable},
     environment::Environment,
     error::LoxError,
@@ -19,21 +20,8 @@ impl Interpreter {
             globals: Environment::new(),
             environment: Environment::new(),
         };
-        interpreter.define_builtin_function("clock", None);
+        declare_builtin_functions(&mut interpreter.globals);
         interpreter
-    }
-    fn define_builtin_function(&mut self, name: &str, params: Option<Vec<&str>>) {
-        let params = params.unwrap_or(vec![]);
-        self.globals.define(
-            String::from(name),
-            LoxValue::Callable(Callable::Func(Function {
-                name: String::from(name),
-                is_user_defined: false,
-                params: params.iter().map(|s| String::from(*s)).collect(),
-                body: vec![],
-                closure: None,
-            })),
-        );
     }
     pub fn interpret(&mut self, statement: Stmt) -> Result<(), LoxError> {
         match statement {

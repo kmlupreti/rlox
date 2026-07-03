@@ -3,6 +3,7 @@ use crate::parser::Parser;
 use std::io::{self, BufRead, BufReader, Read, Write};
 use std::{fs::File, path::Path, process::exit};
 
+pub mod builtin_functions;
 pub mod callable;
 pub mod environment;
 pub mod error;

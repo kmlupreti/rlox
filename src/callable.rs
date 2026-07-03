@@ -1,8 +1,6 @@
-use std::time::{SystemTime, UNIX_EPOCH};
-
 use crate::{
-    environment::Environment, error::LoxError, function::Function, interpreter::Interpreter,
-    lox_value::LoxValue, statement::Stmt,
+    builtin_functions::run_builtin_function, environment::Environment, error::LoxError,
+    function::Function, interpreter::Interpreter, lox_value::LoxValue, statement::Stmt,
 };
 
 #[derive(Debug, Clone, PartialEq)]
@@ -47,17 +45,7 @@ impl LoxCallable for Callable {
                         Err(e) => Err(e),
                     }
                 } else {
-                    match function.name.as_str() {
-                        "clock" => Ok(LoxValue::Number(
-                            SystemTime::now()
-                                .duration_since(UNIX_EPOCH)
-                                .unwrap()
-                                .as_millis() as f64,
-                        )),
-                        unknown_function => Err(LoxError::MiscError {
-                            msg: format!("unknown built-in function '{}' called", unknown_function),
-                        }),
-                    }
+                    run_builtin_function(function)
                 };
                 interpreter.environment = current_env;
                 return_value
