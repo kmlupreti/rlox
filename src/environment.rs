@@ -1,7 +1,7 @@
 use crate::{error::LoxError, lox_value::LoxValue, token::Token};
 use std::collections::HashMap;
 
-#[derive(Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Environment {
     values: HashMap<String, LoxValue>,
     pub enclosing: Option<Box<Environment>>,

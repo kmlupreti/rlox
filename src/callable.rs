@@ -27,12 +27,17 @@ impl LoxCallable for Callable {
     ) -> Result<LoxValue, LoxError> {
         match self {
             Self::Func(function) => {
-                let previous_globals = interpreter.globals.clone();
-                let mut new_globals = Environment::new_enclosing(interpreter.globals.clone());
+                let current_env = interpreter.environment.clone();
+                let mut new_env = Environment::new_enclosing(
+                    function
+                        .closure
+                        .clone()
+                        .unwrap_or(interpreter.environment.clone()),
+                );
                 for i in 0..function.params.len() {
-                    new_globals.define(function.params[i].clone(), args[i].clone());
+                    new_env.define(function.params[i].clone(), args[i].clone());
                 }
-                interpreter.globals = new_globals;
+                interpreter.environment = new_env;
                 let return_value = if function.is_user_defined {
                     match interpreter.interpret(Stmt::BlockStmt {
                         statements: function.body.clone(),
@@ -54,7 +59,7 @@ impl LoxCallable for Callable {
                         }),
                     }
                 };
-                interpreter.globals = previous_globals;
+                interpreter.environment = current_env;
                 return_value
             }
             Self::Class => {

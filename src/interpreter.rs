@@ -31,6 +31,7 @@ impl Interpreter {
                 is_user_defined: false,
                 params: params.iter().map(|s| String::from(*s)).collect(),
                 body: vec![],
+                closure: None,
             })),
         );
     }
@@ -83,13 +84,14 @@ impl Interpreter {
                 }
             }
             Stmt::FuncStmt { name, params, body } => {
-                self.globals.define(
+                self.environment.define(
                     name.clone(),
                     LoxValue::Callable(Callable::Func(Function {
                         name: name,
                         is_user_defined: true,
                         params,
                         body,
+                        closure: Some(self.environment.clone()),
                     })),
                 );
             }
