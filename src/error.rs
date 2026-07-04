@@ -6,8 +6,8 @@ pub enum LoxError {
     ParseError { token: Token, msg: String },
     UnterminatedString { line: usize },
     RuntimeError { line: usize, msg: String },
-    MiscError { msg: String },
-    Return { line: usize, value: LoxValue },
+    CallError { msg: String, line: usize },
+    Return { line: usize, value: Box<LoxValue> },
 }
 impl Display for LoxError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -28,8 +28,8 @@ impl Display for LoxError {
             LoxError::RuntimeError { line, msg } => {
                 write!(f, "[line: {}] {}", line, msg)
             }
-            LoxError::MiscError { msg } => {
-                write!(f, "{}", msg)
+            LoxError::CallError { msg, line } => {
+                write!(f, "[line: {}] {}", line, msg)
             }
             LoxError::Return { line, value: _ } => {
                 write!(
