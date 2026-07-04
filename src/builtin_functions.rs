@@ -42,8 +42,8 @@ pub fn run_builtin_function(function: &Function) -> Result<LoxValue, LoxError> {
                 .unwrap()
                 .as_millis() as f64,
         )),
-        unknown_function => Err(LoxError::MiscError {
-            msg: format!("unknown built-in function '{}' called", unknown_function),
-        }),
+        unknown_function => panic!(
+            "built-in function '{unknown_function}' has been declared but not implemented yet"
+        ),
     }
 }
