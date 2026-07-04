@@ -2,6 +2,7 @@ use crate::{lox_value::LoxValue, token::Token, token_type::TokenType};
 use std::fmt::Display;
 
 pub enum LoxError {
+    ScanError,
     UnexpectedChar { char: char, line: usize },
     ParseError { token: Token, msg: String },
     UnterminatedString { line: usize },
@@ -38,6 +39,7 @@ impl Display for LoxError {
                     line
                 )
             }
+            _ => write!(f, "unknown error occured"),
         }
     }
 }

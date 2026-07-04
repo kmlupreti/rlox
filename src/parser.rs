@@ -269,7 +269,7 @@ impl Parser {
             } else {
                 Err(LoxError::RuntimeError {
                     line: self.peek().line,
-                    msg: format!("unable to assign to invalid target "),
+                    msg: format!("unable to assign to '{}'", self.peek().lexeme),
                 })
             }
         } else {
