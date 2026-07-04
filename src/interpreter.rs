@@ -11,8 +11,8 @@ use crate::{
 };
 #[derive(Default)]
 pub struct Interpreter {
-    pub globals: Environment,
-    pub environment: Environment,
+    pub globals: Box<Environment>,
+    pub locals: Box<Environment>,
 }
 impl Interpreter {
     pub fn new() -> Self {
@@ -31,11 +31,10 @@ impl Interpreter {
             }
             Stmt::VarDeclStmt { name, initializer } => {
                 let value = self.evaluate(initializer)?;
-                self.environment.define(name.lexeme, value);
+                self.locals.define(name.lexeme, value);
             }
             Stmt::BlockStmt { statements } => {
-                let new = Environment::new_enclosing(self.environment.clone());
-                self.environment = new;
+                *self.locals = Environment::new_enclosing(*self.locals.clone());
                 let mut result = Ok(());
                 for s in statements {
                     result = self.interpret(s);
@@ -43,7 +42,7 @@ impl Interpreter {
                         break;
                     };
                 }
-                self.environment = *self.environment.enclosing.clone().unwrap();
+                self.locals = self.locals.enclosing.clone().unwrap();
                 result?
             }
             Stmt::IfStmt {
@@ -69,14 +68,14 @@ impl Interpreter {
                 }
             }
             Stmt::FuncStmt { name, params, body } => {
-                self.environment.define(
+                self.globals.define(
                     name.clone(),
                     LoxValue::Callable(Callable::Func(Function {
                         name,
                         is_user_defined: true,
                         params,
                         body,
-                        closure: Some(self.environment.clone()),
+                        closure: Some(*self.locals.clone()),
                     })),
                 );
             }
@@ -324,11 +323,11 @@ impl Interpreter {
             }
             Expr::Variable { name } => match self.globals.get(name.clone()) {
                 Ok(v) => Ok(v),
-                Err(_) => self.environment.get(name),
+                Err(_) => self.locals.get(name),
             },
             Expr::Assign { name, value } => {
                 let value = self.evaluate(*value)?;
-                self.environment.assign(name, value)
+                self.locals.assign(name, value)
             }
             Expr::Logical {
                 left,

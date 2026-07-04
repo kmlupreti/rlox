@@ -40,17 +40,17 @@ impl LoxCallable for Callable {
         }
         match self {
             Self::Func(function) => {
-                let current_env = interpreter.environment.clone();
+                let current_env = interpreter.locals.clone();
                 let mut new_env = Environment::new_enclosing(
                     function
                         .closure
                         .clone()
-                        .unwrap_or(interpreter.environment.clone()),
+                        .unwrap_or(*interpreter.locals.clone()),
                 );
                 function.params.iter().enumerate().for_each(|(i, param)| {
                     new_env.define(param.clone(), args[i].clone());
                 });
-                interpreter.environment = new_env;
+                *interpreter.locals = new_env;
                 let return_value = if function.is_user_defined {
                     match interpreter.interpret(Stmt::BlockStmt {
                         statements: function.body.clone(),
@@ -62,7 +62,7 @@ impl LoxCallable for Callable {
                 } else {
                     run_builtin_function(function)
                 };
-                interpreter.environment = current_env;
+                interpreter.locals = current_env;
                 return_value
             }
             Self::Class => {
