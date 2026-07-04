@@ -14,12 +14,17 @@ pub struct Interpreter {
     pub globals: Environment,
     pub environment: Environment,
 }
-impl Interpreter {
-    pub fn new() -> Self {
-        let mut interpreter = Self {
+impl Default for Interpreter {
+    fn default() -> Self {
+        Self {
             globals: Environment::new(),
             environment: Environment::new(),
-        };
+        }
+    }
+}
+impl Interpreter {
+    pub fn new() -> Self {
+        let mut interpreter = Self::default();
         declare_builtin_functions(&mut interpreter.globals);
         interpreter
     }
@@ -75,7 +80,7 @@ impl Interpreter {
                 self.environment.define(
                     name.clone(),
                     LoxValue::Callable(Callable::Func(Function {
-                        name: name,
+                        name,
                         is_user_defined: true,
                         params,
                         body,
@@ -90,7 +95,7 @@ impl Interpreter {
                 };
                 return Err(LoxError::Return {
                     line: keyword.line,
-                    value,
+                    value: Box::new(value),
                 });
             }
         }
@@ -227,8 +232,8 @@ impl Interpreter {
                         } else {
                             Err(LoxError::RuntimeError {
                                 line,
-                                msg: format!(
-                                    "failed to add/concat as both operands should either number or string"
+                                msg: String::from(
+                                    "failed to add/concat as both operands should either number or string",
                                 ),
                             })
                         }
@@ -379,12 +384,12 @@ impl Interpreter {
                     args.push(self.evaluate(arg)?);
                 }
                 if let LoxValue::Callable(callable) = callee {
-                    Ok(callable.call(self, args)?)
+                    Ok(callable.call(self, args, paren.line)?)
                 } else {
-                    return Err(LoxError::RuntimeError {
+                    Err(LoxError::RuntimeError {
                         line: paren.line,
                         msg: "can only call function and clases".to_string(),
-                    });
+                    })
                 }
             }
         }
