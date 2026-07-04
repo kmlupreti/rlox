@@ -34,7 +34,7 @@ impl LoxCallable for Callable {
         }
         if self.arity() != args.len() {
             return Err(LoxError::CallError {
-                msg: String::from("number of args passed doesn't match expected number of params"),
+                msg: format!("expected {} arguments but got {}", self.arity(), args.len()),
                 line,
             });
         }
