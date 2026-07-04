@@ -14,15 +14,30 @@ pub trait LoxCallable {
         &self,
         interpreter: &mut Interpreter,
         args: Vec<LoxValue>,
+        line: usize,
     ) -> Result<LoxValue, LoxError>;
     fn arity(&self) -> usize;
 }
+
 impl LoxCallable for Callable {
     fn call(
         &self,
         interpreter: &mut Interpreter,
         args: Vec<LoxValue>,
+        line: usize,
     ) -> Result<LoxValue, LoxError> {
+        if args.len() >= 255 {
+            return Err(LoxError::CallError {
+                msg: String::from("can't have more than 255 arguments"),
+                line,
+            });
+        }
+        if self.arity() != args.len() {
+            return Err(LoxError::CallError {
+                msg: String::from("number of args passed doesn't match expected number of params"),
+                line,
+            });
+        }
         match self {
             Self::Func(function) => {
                 let current_env = interpreter.environment.clone();
@@ -32,16 +47,16 @@ impl LoxCallable for Callable {
                         .clone()
                         .unwrap_or(interpreter.environment.clone()),
                 );
-                for i in 0..function.params.len() {
-                    new_env.define(function.params[i].clone(), args[i].clone());
-                }
+                function.params.iter().enumerate().for_each(|(i, param)| {
+                    new_env.define(param.clone(), args[i].clone());
+                });
                 interpreter.environment = new_env;
                 let return_value = if function.is_user_defined {
                     match interpreter.interpret(Stmt::BlockStmt {
                         statements: function.body.clone(),
                     }) {
                         Ok(()) => Ok(LoxValue::Null),
-                        Err(LoxError::Return { line: _, value }) => Ok(value),
+                        Err(LoxError::Return { line: _, value }) => Ok(*value),
                         Err(e) => Err(e),
                     }
                 } else {
