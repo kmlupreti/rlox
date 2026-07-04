@@ -8,7 +8,7 @@ pub struct Scanner {
     has_error: bool,
 }
 impl Scanner {
-    pub fn new(source: &String) -> Self {
+    pub fn new(source: &str) -> Self {
         let tokens: Vec<Token> = Vec::new();
         Self {
             source: source.chars().collect(),
@@ -22,7 +22,7 @@ impl Scanner {
     fn is_at_end(&self) -> bool {
         self.current_index >= self.source.len()
     }
-    pub fn scan_tokens(&mut self) -> Result<&Vec<Token>, ()> {
+    pub fn scan_tokens(&mut self) -> Result<&Vec<Token>, LoxError> {
         while !self.is_at_end() {
             self.start = self.current_index;
             if let Err(e) = self.scan_token() {
@@ -33,7 +33,7 @@ impl Scanner {
         self.tokens
             .push(Token::new(TokenType::Eof, "\0".to_string(), self.line));
         if self.has_error {
-            Err(())
+            Err(LoxError::ScanError)
         } else {
             Ok(&self.tokens)
         }
@@ -49,7 +49,7 @@ impl Scanner {
     }
     fn match_char(&mut self, expected_char: char) -> bool {
         if self.is_at_end() {
-            return false;
+            false
         } else {
             if self.current_char() != expected_char {
                 false
