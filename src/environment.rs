@@ -1,17 +1,15 @@
 use crate::{error::LoxError, lox_value::LoxValue, token::Token};
 use std::collections::HashMap;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Default, Debug, PartialEq, Clone)]
 pub struct Environment {
     values: HashMap<String, LoxValue>,
     pub enclosing: Option<Box<Environment>>,
 }
+
 impl Environment {
     pub fn new() -> Self {
-        Self {
-            values: HashMap::new(),
-            enclosing: None,
-        }
+        Self::default()
     }
     pub fn new_enclosing(enclosing: Environment) -> Self {
         Self {

@@ -9,18 +9,10 @@ use crate::{
     statement::Stmt,
     token_type::TokenType,
 };
-
+#[derive(Default)]
 pub struct Interpreter {
     pub globals: Environment,
     pub environment: Environment,
-}
-impl Default for Interpreter {
-    fn default() -> Self {
-        Self {
-            globals: Environment::new(),
-            environment: Environment::new(),
-        }
-    }
 }
 impl Interpreter {
     pub fn new() -> Self {
