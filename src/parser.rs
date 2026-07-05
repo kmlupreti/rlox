@@ -52,7 +52,7 @@ impl Parser {
         let name = self.consume(TokenType::Identifier, format!("expect {} name", kind))?;
         self.consume(
             TokenType::LeftParen,
-            String::from("expect '(' after {kind} name"),
+            format!("expect '(' after {kind} name"),
         )?;
         let mut params = vec![];
         if !self.check(TokenType::RightParen) {
