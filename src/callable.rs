@@ -51,7 +51,9 @@ impl LoxCallable for Callable {
                     new_env.define(param.clone(), args[i].clone());
                 });
                 *interpreter.locals = new_env;
-                let return_value = if function.is_user_defined {
+                let return_value = if function.body.is_empty() {
+                    run_builtin_function(function, line)
+                } else {
                     match interpreter.interpret(Stmt::BlockStmt {
                         statements: function.body.clone(),
                     }) {
@@ -59,8 +61,6 @@ impl LoxCallable for Callable {
                         Err(LoxError::Return { line: _, value }) => Ok(*value),
                         Err(e) => Err(e),
                     }
-                } else {
-                    run_builtin_function(function)
                 };
                 interpreter.locals = current_env;
                 return_value

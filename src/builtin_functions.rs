@@ -25,7 +25,6 @@ pub fn declare_builtin_functions(globals: &mut Environment) {
             String::from(function.name),
             LoxValue::Callable(Callable::Func(Function {
                 name: String::from(function.name),
-                is_user_defined: false,
                 params: params.iter().map(|s| String::from(*s)).collect(),
                 body: vec![],
                 closure: None,
@@ -34,7 +33,7 @@ pub fn declare_builtin_functions(globals: &mut Environment) {
     }
 }
 
-pub fn run_builtin_function(function: &Function) -> Result<LoxValue, LoxError> {
+pub fn run_builtin_function(function: &Function, line: usize) -> Result<LoxValue, LoxError> {
     match function.name.as_str() {
         "clock" => Ok(LoxValue::Number(
             SystemTime::now()
@@ -42,8 +41,9 @@ pub fn run_builtin_function(function: &Function) -> Result<LoxValue, LoxError> {
                 .unwrap()
                 .as_millis() as f64,
         )),
-        unknown_function => panic!(
-            "built-in function '{unknown_function}' has been declared but not implemented yet"
-        ),
+        unknown_function => Err(LoxError::CallError {
+            msg: format!("undefined built-in function '{}' called", unknown_function),
+            line,
+        }),
     }
 }

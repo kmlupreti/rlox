@@ -72,7 +72,6 @@ impl Interpreter {
                     name.clone(),
                     LoxValue::Callable(Callable::Func(Function {
                         name,
-                        is_user_defined: true,
                         params,
                         body,
                         closure: Some(*self.locals.clone()),
