@@ -40,13 +40,14 @@ impl LoxCallable for Callable {
         }
         match self {
             Self::Func(function) => {
-                *interpreter.locals = Environment {
-                    values: function.closure.clone(),
-                    enclosing: Some(interpreter.locals.clone()),
-                };
+                let previous_env = interpreter.locals.clone();
+                let function_env = Environment::new_enclosing(function.closure.clone().unwrap());
                 function.params.iter().enumerate().for_each(|(i, param)| {
-                    interpreter.locals.define(param.clone(), args[i].clone());
+                    function_env
+                        .borrow_mut()
+                        .define(param.clone(), args[i].clone());
                 });
+                interpreter.locals = function_env;
                 let mut return_value = Ok(LoxValue::Null);
                 if function.body.is_empty() {
                     return_value = run_builtin_function(function, line)
@@ -62,7 +63,7 @@ impl LoxCallable for Callable {
                         }
                     }
                 }
-                interpreter.locals = interpreter.locals.enclosing.clone().unwrap();
+                interpreter.locals = previous_env;
                 return_value
             }
             Self::Class => {

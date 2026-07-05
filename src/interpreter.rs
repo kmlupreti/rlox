@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use crate::{
     builtin_functions::declare_builtin_functions,
     callable::{Callable, LoxCallable},
@@ -11,13 +13,13 @@ use crate::{
 };
 #[derive(Default)]
 pub struct Interpreter {
-    pub globals: Box<Environment>,
-    pub locals: Box<Environment>,
+    pub globals: Rc<RefCell<Environment>>,
+    pub locals: Rc<RefCell<Environment>>,
 }
 impl Interpreter {
     pub fn new() -> Self {
         let mut interpreter = Self::default();
-        declare_builtin_functions(&mut interpreter.globals);
+        declare_builtin_functions(&mut interpreter);
         interpreter
     }
     pub fn interpret(&mut self, statement: Stmt) -> Result<(), LoxError> {
@@ -31,10 +33,12 @@ impl Interpreter {
             }
             Stmt::VarDeclStmt { name, initializer } => {
                 let value = self.evaluate(initializer)?;
-                self.locals.define(name.lexeme, value);
+                self.locals.borrow_mut().define(name.lexeme, value);
             }
             Stmt::BlockStmt { statements } => {
-                *self.locals = Environment::new_enclosing(self.locals.clone());
+                let previous_env = self.locals.clone();
+                let block_env = Environment::new_enclosing(previous_env.clone());
+                self.locals = block_env;
                 let mut result = Ok(());
                 for s in statements {
                     result = self.interpret(s);
@@ -42,7 +46,7 @@ impl Interpreter {
                         break;
                     };
                 }
-                self.locals = self.locals.enclosing.clone().unwrap();
+                self.locals = previous_env;
                 result?
             }
             Stmt::IfStmt {
@@ -68,13 +72,13 @@ impl Interpreter {
                 }
             }
             Stmt::FuncStmt { name, params, body } => {
-                self.locals.define(
+                self.locals.borrow_mut().define(
                     name.clone(),
                     LoxValue::Callable(Callable::Func(Function {
                         name,
                         params,
                         body,
-                        closure: self.locals.values.clone(),
+                        closure: Some(self.locals.clone()),
                     })),
                 );
             }
@@ -320,13 +324,13 @@ impl Interpreter {
                     }),
                 }
             }
-            Expr::Variable { name } => match self.globals.get(name.clone()) {
+            Expr::Variable { name } => match self.globals.borrow().get(name.clone()) {
                 Ok(v) => Ok(v),
-                Err(_) => self.locals.get(name),
+                Err(_) => self.locals.borrow().get(name),
             },
             Expr::Assign { name, value } => {
                 let value = self.evaluate(*value)?;
-                self.locals.assign(name, value)
+                self.locals.borrow_mut().assign(name, value)
             }
             Expr::Logical {
                 left,

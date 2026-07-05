@@ -1,18 +1,15 @@
 use crate::{
-    callable::Callable, environment::Environment, error::LoxError, function::Function,
+    callable::Callable, error::LoxError, function::Function, interpreter::Interpreter,
     lox_value::LoxValue,
 };
-use std::{
-    collections::HashMap,
-    time::{SystemTime, UNIX_EPOCH},
-};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 struct BuiltInFunction<'a> {
     name: &'a str,
     params: Option<&'a [&'a str]>,
 }
 
-pub fn declare_builtin_functions(globals: &mut Environment) {
+pub fn declare_builtin_functions(interpreter: &mut Interpreter) {
     let mut functions = vec![];
     functions.push(BuiltInFunction {
         name: "clock",
@@ -24,13 +21,13 @@ pub fn declare_builtin_functions(globals: &mut Environment) {
             Some(params) => Vec::from(params),
             None => vec![],
         };
-        globals.define(
+        interpreter.globals.borrow_mut().define(
             String::from(function.name),
             LoxValue::Callable(Callable::Func(Function {
                 name: String::from(function.name),
                 params: params.iter().map(|s| String::from(*s)).collect(),
                 body: vec![],
-                closure: HashMap::default(),
+                closure: None,
             })),
         );
     }

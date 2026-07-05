@@ -1,21 +1,21 @@
 use crate::{error::LoxError, lox_value::LoxValue, token::Token};
-use std::collections::HashMap;
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 #[derive(Default, Debug, PartialEq, Clone)]
 pub struct Environment {
     pub values: HashMap<String, LoxValue>,
-    pub enclosing: Option<Box<Environment>>,
+    pub enclosing: Option<Rc<RefCell<Environment>>>,
 }
-
+type EnvRef = Rc<RefCell<Environment>>;
 impl Environment {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn new_enclosing(enclosing: Box<Environment>) -> Self {
-        Self {
+    pub fn new_enclosing(enclosing: EnvRef) -> EnvRef {
+        Rc::new(RefCell::new(Self {
             values: HashMap::new(),
             enclosing: Some(enclosing),
-        }
+        }))
     }
     pub fn define(&mut self, name: String, value: LoxValue) {
         self.values.insert(name, value);
@@ -24,7 +24,7 @@ impl Environment {
         match self.values.get(&name.lexeme) {
             Some(v) => Ok(v.clone()),
             None => match self.enclosing {
-                Some(ref env) => env.get(name),
+                Some(ref env) => env.borrow().get(name),
                 None => Err(LoxError::RuntimeError {
                     line: name.line,
                     msg: format!("undeclared variable '{}' found", name.lexeme),
@@ -38,7 +38,7 @@ impl Environment {
             Ok(value)
         } else {
             match self.enclosing {
-                Some(ref mut env) => env.assign(name, value),
+                Some(ref mut env) => env.borrow_mut().assign(name, value),
                 None => Err(LoxError::RuntimeError {
                     line: name.line,
                     msg: format!("unable to assign to undeclared variable '{}'", name.lexeme),
