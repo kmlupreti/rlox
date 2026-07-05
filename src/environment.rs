@@ -4,7 +4,7 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 #[derive(Default, Debug, PartialEq, Clone)]
 pub struct Environment {
     pub values: HashMap<String, LoxValue>,
-    pub enclosing: Option<Rc<RefCell<Environment>>>,
+    pub enclosing: Option<EnvRef>,
 }
 pub type EnvRef = Rc<RefCell<Environment>>;
 impl Environment {
