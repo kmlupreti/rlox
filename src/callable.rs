@@ -40,12 +40,8 @@ impl LoxCallable for Callable {
         }
         match self {
             Self::Func(function) => {
-                let mut values = interpreter.locals.values.clone();
-                if let Some(env) = function.closure.clone() {
-                    values.extend(env.values);
-                }
                 *interpreter.locals = Environment {
-                    values,
+                    values: function.closure.clone(),
                     enclosing: Some(interpreter.locals.clone()),
                 };
                 function.params.iter().enumerate().for_each(|(i, param)| {

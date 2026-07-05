@@ -2,7 +2,10 @@ use crate::{
     callable::Callable, environment::Environment, error::LoxError, function::Function,
     lox_value::LoxValue,
 };
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::{
+    collections::HashMap,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 struct BuiltInFunction<'a> {
     name: &'a str,
@@ -27,7 +30,7 @@ pub fn declare_builtin_functions(globals: &mut Environment) {
                 name: String::from(function.name),
                 params: params.iter().map(|s| String::from(*s)).collect(),
                 body: vec![],
-                closure: None,
+                closure: HashMap::default(),
             })),
         );
     }

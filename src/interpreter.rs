@@ -74,7 +74,7 @@ impl Interpreter {
                         name,
                         params,
                         body,
-                        closure: Some(self.locals.clone()),
+                        closure: self.locals.values.clone(),
                     })),
                 );
             }

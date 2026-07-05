@@ -1,9 +1,11 @@
-use crate::{environment::Environment, statement::Stmt};
+use std::collections::HashMap;
+
+use crate::{lox_value::LoxValue, statement::Stmt};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Function {
     pub name: String,
     pub params: Vec<String>,
     pub body: Vec<Stmt>,
-    pub closure: Option<Box<Environment>>,
+    pub closure: HashMap<String, LoxValue>,
 }
