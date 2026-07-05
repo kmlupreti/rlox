@@ -5,5 +5,5 @@ pub struct Function {
     pub name: String,
     pub params: Vec<String>,
     pub body: Vec<Stmt>,
-    pub closure: Option<Environment>,
+    pub closure: Option<Box<Environment>>,
 }

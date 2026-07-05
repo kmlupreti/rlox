@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 #[derive(Default, Debug, PartialEq, Clone)]
 pub struct Environment {
-    values: HashMap<String, LoxValue>,
+    pub values: HashMap<String, LoxValue>,
     pub enclosing: Option<Box<Environment>>,
 }
 
@@ -11,10 +11,10 @@ impl Environment {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn new_enclosing(enclosing: Environment) -> Self {
+    pub fn new_enclosing(enclosing: Box<Environment>) -> Self {
         Self {
             values: HashMap::new(),
-            enclosing: Some(Box::new(enclosing)),
+            enclosing: Some(enclosing),
         }
     }
     pub fn define(&mut self, name: String, value: LoxValue) {

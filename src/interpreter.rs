@@ -34,7 +34,7 @@ impl Interpreter {
                 self.locals.define(name.lexeme, value);
             }
             Stmt::BlockStmt { statements } => {
-                *self.locals = Environment::new_enclosing(*self.locals.clone());
+                *self.locals = Environment::new_enclosing(self.locals.clone());
                 let mut result = Ok(());
                 for s in statements {
                     result = self.interpret(s);
@@ -68,13 +68,13 @@ impl Interpreter {
                 }
             }
             Stmt::FuncStmt { name, params, body } => {
-                self.globals.define(
+                self.locals.define(
                     name.clone(),
                     LoxValue::Callable(Callable::Func(Function {
                         name,
                         params,
                         body,
-                        closure: Some(*self.locals.clone()),
+                        closure: Some(self.locals.clone()),
                     })),
                 );
             }
