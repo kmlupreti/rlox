@@ -1,9 +1,7 @@
-use std::{cell::RefCell, rc::Rc};
-
 use crate::{
     builtin_functions::declare_builtin_functions,
     callable::{Callable, LoxCallable},
-    environment::Environment,
+    environment::{EnvRef, Environment},
     error::LoxError,
     expresssion::Expr,
     function::Function,
@@ -13,8 +11,8 @@ use crate::{
 };
 #[derive(Default)]
 pub struct Interpreter {
-    pub globals: Rc<RefCell<Environment>>,
-    pub locals: Rc<RefCell<Environment>>,
+    pub globals: EnvRef,
+    pub locals: EnvRef,
 }
 impl Interpreter {
     pub fn new() -> Self {

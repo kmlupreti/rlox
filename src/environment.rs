@@ -6,7 +6,7 @@ pub struct Environment {
     pub values: HashMap<String, LoxValue>,
     pub enclosing: Option<Rc<RefCell<Environment>>>,
 }
-type EnvRef = Rc<RefCell<Environment>>;
+pub type EnvRef = Rc<RefCell<Environment>>;
 impl Environment {
     pub fn new() -> Self {
         Self::default()
