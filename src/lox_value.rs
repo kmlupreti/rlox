@@ -15,8 +15,11 @@ impl Display for LoxValue {
             LoxValue::Number(n) => write!(f, "{n}"),
             LoxValue::String(s) => write!(f, "\"{s}\""),
             LoxValue::Boolean(b) => write!(f, "{b}"),
-            LoxValue::Callable(c) => write!(f, "{:?}", c),
+            LoxValue::Callable(Callable::Class) => write!(f, "class"),
             LoxValue::Null => write!(f, "nil"),
+            LoxValue::Callable(Callable::Func(function)) => {
+                write!(f, "fun {}()", function.name)
+            }
         }
     }
 }
