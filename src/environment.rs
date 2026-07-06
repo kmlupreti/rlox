@@ -28,7 +28,7 @@ impl Environment {
                 Some(ref env) => env.borrow().get(name),
                 None => Err(LoxError::RuntimeError {
                     line: name.line,
-                    msg: format!("undeclared variable '{}' found", name.lexeme),
+                    msg: format!("undeclared identifier '{}' found", name.lexeme),
                 }),
             },
         }
@@ -42,7 +42,10 @@ impl Environment {
                 Some(ref mut env) => env.borrow_mut().assign(name, value),
                 None => Err(LoxError::RuntimeError {
                     line: name.line,
-                    msg: format!("unable to assign to undeclared variable '{}'", name.lexeme),
+                    msg: format!(
+                        "unable to assign to undeclared indentifier '{}'",
+                        name.lexeme
+                    ),
                 }),
             }
         }

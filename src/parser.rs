@@ -261,7 +261,7 @@ impl Parser {
         if self.check(TokenType::Equal) {
             self.advance(); // consume = 
             let value = self.assignment()?;
-            if let Expr::Variable { name } = expr {
+            if let Expr::Identifier { name } = expr {
                 Ok(Expr::Assign {
                     name,
                     value: Box::new(value),
@@ -428,7 +428,7 @@ impl Parser {
                 )?;
                 Ok(Expr::Grouping { expr })
             }
-            TokenType::Identifier => Ok(Expr::Variable {
+            TokenType::Identifier => Ok(Expr::Identifier {
                 name: self.advance().clone(),
             }),
             _ => Err(LoxError::ParseError {

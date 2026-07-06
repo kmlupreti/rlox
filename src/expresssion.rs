@@ -22,7 +22,7 @@ pub enum Expr {
     Grouping {
         expr: Box<Expr>,
     },
-    Variable {
+    Identifier {
         name: Token,
     },
     Assign {

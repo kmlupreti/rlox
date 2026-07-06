@@ -322,7 +322,7 @@ impl Interpreter {
                     }),
                 }
             }
-            Expr::Variable { name } => match self.globals.borrow().get(name.clone()) {
+            Expr::Identifier { name } => match self.globals.borrow().get(name.clone()) {
                 Ok(v) => Ok(v),
                 Err(_) => self.locals.borrow().get(name),
             },
