@@ -1,12 +1,13 @@
 use crate::{error::LoxError, lox_value::LoxValue, token::Token};
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
+pub type EnvRef = Rc<RefCell<Environment>>;
+
 #[derive(Default, Debug, PartialEq, Clone)]
 pub struct Environment {
     pub values: HashMap<String, LoxValue>,
     pub enclosing: Option<EnvRef>,
 }
-pub type EnvRef = Rc<RefCell<Environment>>;
 impl Environment {
     pub fn new() -> Self {
         Self::default()
