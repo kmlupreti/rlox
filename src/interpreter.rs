@@ -12,7 +12,7 @@ use crate::{
 #[derive(Default)]
 pub struct Interpreter {
     pub globals: EnvRef,
-    pub locals: EnvRef,
+    pub current_environment: EnvRef,
 }
 impl Interpreter {
     pub fn new() -> Self {
@@ -37,12 +37,14 @@ impl Interpreter {
             }
             Stmt::VarDeclStmt { name, initializer } => {
                 let value = self.evaluate(initializer)?;
-                self.locals.borrow_mut().define(name.lexeme, value);
+                self.current_environment
+                    .borrow_mut()
+                    .define(name.lexeme, value);
             }
             Stmt::BlockStmt { statements } => {
-                let previous_env = self.locals.clone();
+                let previous_env = self.current_environment.clone();
                 let block_env = Environment::new_enclosing(previous_env.clone());
-                self.locals = block_env;
+                self.current_environment = block_env;
                 let mut result = Ok(());
                 for s in statements {
                     result = self.execute_stmt(s);
@@ -50,7 +52,7 @@ impl Interpreter {
                         break;
                     };
                 }
-                self.locals = previous_env;
+                self.current_environment = previous_env;
                 result?
             }
             Stmt::IfStmt {
@@ -76,13 +78,13 @@ impl Interpreter {
                 }
             }
             Stmt::FuncStmt { name, params, body } => {
-                self.locals.borrow_mut().define(
+                self.current_environment.borrow_mut().define(
                     name.clone(),
                     LoxValue::Callable(Callable::Func(Function {
                         name,
                         params,
                         body,
-                        closure: Some(self.locals.clone()),
+                        closure: Some(self.current_environment.clone()),
                     })),
                 );
             }
@@ -330,11 +332,11 @@ impl Interpreter {
             }
             Expr::Identifier { name } => match self.globals.borrow().get(name.clone()) {
                 Ok(v) => Ok(v),
-                Err(_) => self.locals.borrow().get(name),
+                Err(_) => self.current_environment.borrow().get(name),
             },
             Expr::Assign { name, value } => {
                 let value = self.evaluate(*value)?;
-                self.locals.borrow_mut().assign(name, value)
+                self.current_environment.borrow_mut().assign(name, value)
             }
             Expr::Logical {
                 left,
