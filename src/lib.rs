@@ -12,6 +12,7 @@ pub mod function;
 pub mod interpreter;
 pub mod lox_value;
 pub mod parser;
+pub mod resolver;
 pub mod scanner;
 pub mod statement;
 pub mod token;
@@ -33,14 +34,9 @@ where
     };
     let mut parser = Parser::new(tokens.clone());
     let statements = parser.parse();
-    for s in statements {
-        match interpreter.interpret(s) {
-            Ok(_) => (),
-            Err(e) => {
-                eprintln!("{e}");
-                exit(70);
-            }
-        }
+    if let Err(e) = interpreter.run(statements) {
+        eprintln!("{e}");
+        exit(70);
     }
     Ok(())
 }
@@ -62,11 +58,8 @@ pub fn run_prompt() -> io::Result<()> {
         };
         let mut parser = Parser::new(tokens.clone());
         let statements = parser.parse();
-        for s in statements {
-            match interpreter.interpret(s) {
-                Ok(_) => (),
-                Err(e) => eprintln!("{e}"),
-            }
+        if let Err(e) = interpreter.run(statements) {
+            eprintln!("{e}");
         }
     }
     Ok(())

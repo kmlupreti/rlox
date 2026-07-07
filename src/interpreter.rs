@@ -20,7 +20,13 @@ impl Interpreter {
         declare_builtin_functions(&mut interpreter);
         interpreter
     }
-    pub fn interpret(&mut self, statement: Stmt) -> Result<(), LoxError> {
+    pub fn run(&mut self, statements: Vec<Stmt>) -> Result<(), LoxError> {
+        for s in statements {
+            self.execute_stmt(s)?;
+        }
+        Ok(())
+    }
+    pub fn execute_stmt(&mut self, statement: Stmt) -> Result<(), LoxError> {
         match statement {
             Stmt::ExprStmt { expr } => {
                 self.evaluate(expr)?;
@@ -39,7 +45,7 @@ impl Interpreter {
                 self.locals = block_env;
                 let mut result = Ok(());
                 for s in statements {
-                    result = self.interpret(s);
+                    result = self.execute_stmt(s);
                     if result.is_err() {
                         break;
                     };
@@ -55,10 +61,10 @@ impl Interpreter {
                 let condition = self.evaluate(condition)?;
                 if let LoxValue::Boolean(is_condition_true) = condition {
                     if is_condition_true {
-                        self.interpret(*then_branch)?
+                        self.execute_stmt(*then_branch)?
                     } else {
                         if let Some(else_branch) = else_branch {
-                            self.interpret(*else_branch)?
+                            self.execute_stmt(*else_branch)?
                         }
                     }
                 }
@@ -66,7 +72,7 @@ impl Interpreter {
 
             Stmt::WhileStmt { condition, body } => {
                 while self.evaluate(condition.clone())?.is_true() {
-                    self.interpret(*body.clone())?;
+                    self.execute_stmt(*body.clone())?;
                 }
             }
             Stmt::FuncStmt { name, params, body } => {

@@ -52,15 +52,10 @@ impl LoxCallable for Callable {
                 if function.body.is_empty() {
                     return_value = run_builtin_function(function, line)
                 } else {
-                    for stmt in function.body.clone() {
-                        match interpreter.interpret(stmt) {
-                            Ok(_) => continue,
-                            Err(LoxError::Return { line: _, value }) => {
-                                return_value = Ok(*value);
-                                break;
-                            }
-                            Err(e) => return Err(e),
-                        }
+                    if let Err(LoxError::Return { line: _, value }) =
+                        interpreter.run(function.body.clone())
+                    {
+                        return_value = Ok(*value);
                     }
                 }
                 interpreter.locals = previous_env;
