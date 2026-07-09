@@ -1,6 +1,6 @@
 use crate::token::Token;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Expr {
     Literal {
         value: Token,
@@ -24,10 +24,12 @@ pub enum Expr {
     },
     Identifier {
         name: Token,
+        id: usize,
     },
     Assign {
         name: Token,
         value: Box<Expr>,
+        id: usize,
     },
     Call {
         callee: Box<Expr>,

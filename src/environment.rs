@@ -21,33 +21,51 @@ impl Environment {
     pub fn define(&mut self, name: String, value: LoxValue) {
         self.values.insert(name, value);
     }
-    pub fn get(&self, name: Token) -> Result<LoxValue, LoxError> {
-        match self.values.get(&name.lexeme) {
-            Some(v) => Ok(v.clone()),
-            None => match self.enclosing {
-                Some(ref env) => env.borrow().get(name),
-                None => Err(LoxError::RuntimeError {
-                    line: name.line,
-                    msg: format!("undeclared identifier '{}' found", name.lexeme),
-                }),
-            },
+    pub fn get_at(&self, name: Token, distance: usize) -> Result<LoxValue, LoxError> {
+        if distance == 0
+            && let Some(v) = self.values.get(&name.lexeme)
+        {
+            Ok(v.clone())
+        } else if let Some(env) = self.ancestor(distance)
+            && let Some(v) = env.borrow().values.get(&name.lexeme)
+        {
+            Ok(v.clone())
+        } else {
+            Err(LoxError::RuntimeError {
+                line: name.line,
+                msg: format!("undeclared identifier '{}' found", name.lexeme),
+            })
         }
     }
-    pub fn assign(&mut self, name: Token, value: LoxValue) -> Result<LoxValue, LoxError> {
-        if self.values.contains_key(&name.lexeme) {
-            self.define(name.lexeme, value.clone());
+    pub fn ancestor(&self, distance: usize) -> Option<EnvRef> {
+        let mut current_env = self.enclosing.as_ref()?.clone();
+        for _ in 1..distance {
+            let enclosing = current_env.borrow().enclosing.as_ref()?.clone();
+            current_env = enclosing;
+        }
+        Some(current_env)
+    }
+    pub fn assign_at(
+        &mut self,
+        name: Token,
+        value: LoxValue,
+        distance: usize,
+    ) -> Result<LoxValue, LoxError> {
+        if distance == 0 && self.values.contains_key(&name.lexeme) {
+            Ok(self.values.insert(name.lexeme, value).unwrap())
+        } else if let Some(env) = self.ancestor(distance)
+            && env.borrow().values.contains_key(&name.lexeme)
+        {
+            env.borrow_mut().values.insert(name.lexeme, value.clone());
             Ok(value)
         } else {
-            match self.enclosing {
-                Some(ref mut env) => env.borrow_mut().assign(name, value),
-                None => Err(LoxError::RuntimeError {
-                    line: name.line,
-                    msg: format!(
-                        "unable to assign to undeclared indentifier '{}'",
-                        name.lexeme
-                    ),
-                }),
-            }
+            Err(LoxError::RuntimeError {
+                line: name.line,
+                msg: format!(
+                    "Unable to assign to undeclared identifier '{}'",
+                    name.lexeme
+                ),
+            })
         }
     }
 }

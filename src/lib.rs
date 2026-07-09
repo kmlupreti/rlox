@@ -12,7 +12,6 @@ pub mod function;
 pub mod interpreter;
 pub mod lox_value;
 pub mod parser;
-pub mod resolver;
 pub mod scanner;
 pub mod statement;
 pub mod token;
@@ -25,7 +24,6 @@ where
     let file = File::open(path)?;
     let mut reader = BufReader::new(file);
     let mut buffer = String::new();
-    let mut interpreter = Interpreter::new();
     reader.read_to_string(&mut buffer)?;
     let mut scanner = scanner::Scanner::new(&buffer);
     let tokens = match scanner.scan_tokens() {
@@ -34,7 +32,7 @@ where
     };
     let mut parser = Parser::new(tokens.clone());
     let statements = parser.parse();
-    if let Err(e) = interpreter.run(statements) {
+    if let Err(e) = Interpreter::new().run(statements) {
         eprintln!("{e}");
         exit(70);
     }

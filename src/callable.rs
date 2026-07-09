@@ -41,7 +41,9 @@ impl LoxCallable for Callable {
         match self {
             Self::Func(function) => {
                 let previous_env = interpreter.current_environment.clone();
-                let function_env = Environment::new_enclosing(function.closure.clone().unwrap());
+                let function_env = Environment::new_enclosing(
+                    function.closure.clone().unwrap_or(previous_env.clone()),
+                );
                 function.params.iter().enumerate().for_each(|(i, param)| {
                     function_env
                         .borrow_mut()

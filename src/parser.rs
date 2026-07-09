@@ -9,10 +9,20 @@ type ParserResult<T> = Result<T, LoxError>;
 pub struct Parser {
     tokens: Vec<Token>,
     current: usize,
+    next_id: usize,
 }
 impl Parser {
     pub fn new(tokens: Vec<Token>) -> Self {
-        Parser { tokens, current: 0 }
+        Parser {
+            tokens,
+            current: 0,
+            next_id: 0,
+        }
+    }
+    pub fn next_node_id(&mut self) -> usize {
+        let id = self.next_id;
+        self.next_id = id + 1;
+        id
     }
     pub fn parse(&mut self) -> Vec<Stmt> {
         let mut statements: Vec<Stmt> = vec![];
@@ -63,25 +73,18 @@ impl Parser {
             String::from("expect ')' after parameters"),
         )?;
 
-        let statements = match self.statement()? {
+        let body = match self.statement()? {
             Stmt::BlockStmt { statements } => statements,
-            other_statement => vec![other_statement],
+            stmt => vec![stmt],
         };
-        Ok(Stmt::FuncStmt {
-            name: name.lexeme,
-            params,
-            body: statements,
-        })
+        Ok(Stmt::FuncStmt { name, params, body })
     }
-    fn parameters(&mut self) -> ParserResult<Vec<String>> {
+    fn parameters(&mut self) -> ParserResult<Vec<Token>> {
         let mut params = vec![];
-        params.push(
-            self.consume(TokenType::Identifier, String::from("expected a parameter"))?
-                .lexeme,
-        );
+        params.push(self.consume(TokenType::Identifier, String::from("expected a parameter"))?);
         while self.check(TokenType::Comma) {
             self.advance();
-            params.push(self.advance().lexeme.clone());
+            params.push(self.advance().clone());
         }
         Ok(params)
     }
@@ -261,10 +264,11 @@ impl Parser {
         if self.check(TokenType::Equal) {
             self.advance(); // consume = 
             let value = self.assignment()?;
-            if let Expr::Identifier { name } = expr {
+            if let Expr::Identifier { name, .. } = expr {
                 Ok(Expr::Assign {
                     name,
                     value: Box::new(value),
+                    id: self.next_node_id(),
                 })
             } else {
                 Err(LoxError::RuntimeError {
@@ -430,6 +434,7 @@ impl Parser {
             }
             TokenType::Identifier => Ok(Expr::Identifier {
                 name: self.advance().clone(),
+                id: self.next_node_id(),
             }),
             _ => Err(LoxError::ParseError {
                 token: self.peek().clone(),
