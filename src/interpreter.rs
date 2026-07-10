@@ -430,6 +430,45 @@ impl Interpreter {
                     })
                 }
             }
+            Expr::Get { name, expr } => {
+                if let LoxValue::Instance(instance) = self.evaluate(*expr)? {
+                    if let Some(v) = instance.borrow().fields.get(&name.lexeme) {
+                        Ok(v.clone())
+                    } else {
+                        Err(LoxError::GetError {
+                            msg: format!(
+                                "failed to get value of undefined property '{}'",
+                                name.lexeme
+                            ),
+                            line: name.line,
+                        })
+                    }
+                } else {
+                    Err(LoxError::GetError {
+                        msg: String::from("unable to get property of invalid instance"),
+                        line: name.line,
+                    })
+                }
+            }
+            Expr::Set {
+                name,
+                value,
+                object,
+            } => {
+                if let LoxValue::Instance(instance) = self.evaluate(*object)? {
+                    let value = self.evaluate(*value)?;
+                    instance
+                        .borrow_mut()
+                        .fields
+                        .insert(name.lexeme, value.clone());
+                    Ok(value)
+                } else {
+                    Err(LoxError::GetError {
+                        msg: String::from("unable to set property of invalid instance"),
+                        line: name.line,
+                    })
+                }
+            }
         }
     }
 
@@ -504,7 +543,7 @@ impl Interpreter {
     }
 
     fn resolve_expr(&mut self, expr: Expr) -> Result<(), LoxError> {
-        match expr.clone() {
+        match expr {
             Expr::Literal { value: _ } => (),
             Expr::Unary { operator: _, right } => self.resolve_expr(*right)?,
             Expr::Binary {
@@ -551,6 +590,21 @@ impl Interpreter {
                 for arg in arguments {
                     self.resolve_expr(arg)?;
                 }
+            }
+            Expr::Get { name, expr } => {
+                self.declare(name.clone())?;
+                self.define(name);
+                self.resolve_expr(*expr)?;
+            }
+            Expr::Set {
+                name,
+                value,
+                object,
+            } => {
+                self.declare(name.clone())?;
+                self.define(name);
+                self.resolve_expr(*value)?;
+                self.resolve_expr(*object)?;
             }
         }
         Ok(())

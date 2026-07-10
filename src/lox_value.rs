@@ -1,5 +1,5 @@
 use crate::{class::Class, function::Function, instance::Instance};
-use std::fmt::Display;
+use std::{cell::RefCell, fmt::Display, rc::Rc};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum LoxValue {
@@ -8,7 +8,7 @@ pub enum LoxValue {
     Boolean(bool),
     Function(Function),
     Class(Class),
-    Instance(Instance),
+    Instance(Rc<RefCell<Instance>>),
     Null,
 }
 impl Display for LoxValue {
@@ -19,7 +19,9 @@ impl Display for LoxValue {
             LoxValue::String(s) => write!(f, "\"{s}\""),
             LoxValue::Boolean(b) => write!(f, "{b}"),
             LoxValue::Class(class) => write!(f, "class: {}", class.name),
-            LoxValue::Instance(instance) => write!(f, "instance of class: {}", instance.class.name),
+            LoxValue::Instance(instance) => {
+                write!(f, "instance of class: {}", instance.borrow().class.name)
+            }
             LoxValue::Function(function) => {
                 write!(f, "fun {}()", function.name)
             }

@@ -10,6 +10,7 @@ pub enum LoxError {
     CallError { msg: String, line: usize },
     Return { line: usize, value: Box<LoxValue> },
     ResolveError { line: usize, msg: String },
+    GetError { msg: String, line: usize },
 }
 impl Display for LoxError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -31,6 +32,9 @@ impl Display for LoxError {
                 write!(f, "[line: {}] {}", line, msg)
             }
             LoxError::CallError { msg, line } => {
+                write!(f, "[line: {}] {}", line, msg)
+            }
+            LoxError::GetError { msg, line } => {
                 write!(f, "[line: {}] {}", line, msg)
             }
             LoxError::ResolveError { msg, line } => {

@@ -1,8 +1,7 @@
-use std::str;
-
 use crate::{
     error::LoxError, expresssion::Expr, statement::Stmt, token::Token, token_type::TokenType,
 };
+use std::str;
 
 type ParserResult<T> = Result<T, LoxError>;
 
@@ -247,7 +246,7 @@ impl Parser {
         })
     }
     fn print_stmt(&mut self) -> ParserResult<Stmt> {
-        self.advance(); // consume String::from(print )token
+        self.advance();
         let expr = self.expression()?;
         self.consume(
             TokenType::Semicolon,
@@ -283,17 +282,21 @@ impl Parser {
         if self.check(TokenType::Equal) {
             self.advance(); // consume = 
             let value = self.assignment()?;
-            if let Expr::Identifier { name, .. } = expr {
-                Ok(Expr::Assign {
+            match expr {
+                Expr::Identifier { name, .. } => Ok(Expr::Assign {
                     name,
                     value: Box::new(value),
                     id: self.next_node_id(),
-                })
-            } else {
-                Err(LoxError::RuntimeError {
+                }),
+                Expr::Get { name, expr } => Ok(Expr::Set {
+                    name,
+                    value: Box::new(value),
+                    object: expr,
+                }),
+                _ => Err(LoxError::RuntimeError {
                     line: self.peek().line,
                     msg: format!("unable to assign to '{}'", self.peek().lexeme),
-                })
+                }),
             }
         } else {
             Ok(expr)
@@ -397,26 +400,41 @@ impl Parser {
     }
     fn call(&mut self) -> ParserResult<Expr> {
         let mut expr = self.primary()?;
-        while self.check(TokenType::LeftParen) {
-            let paren;
-            let mut arguments = vec![];
-            self.advance();
-            if !self.check(TokenType::RightParen) {
-                arguments = self.arguments()?;
-                paren = self.consume(
-                    TokenType::RightParen,
-                    String::from("expected ')' after function arguments"),
-                )?;
-            } else {
-                paren = self.peek().clone();
+        loop {
+            if self.check(TokenType::LeftParen) {
+                let paren;
+                let mut arguments = vec![];
                 self.advance();
+                if !self.check(TokenType::RightParen) {
+                    arguments = self.arguments()?;
+                    paren = self.consume(
+                        TokenType::RightParen,
+                        String::from("expected ')' after function arguments"),
+                    )?;
+                } else {
+                    paren = self.peek().clone();
+                    self.advance();
+                }
+                expr = Expr::Call {
+                    callee: Box::new(expr),
+                    paren,
+                    arguments,
+                };
+            } else if self.check(TokenType::Dot) {
+                self.advance();
+                let name = self.consume(
+                    TokenType::Identifier,
+                    String::from("expected property name after '.'"),
+                )?;
+                expr = Expr::Get {
+                    name,
+                    expr: Box::new(expr),
+                }
+            } else {
+                break;
             }
-            expr = Expr::Call {
-                callee: Box::new(expr),
-                paren,
-                arguments,
-            };
         }
+
         Ok(expr)
     }
     fn arguments(&mut self) -> ParserResult<Vec<Expr>> {

@@ -36,4 +36,13 @@ pub enum Expr {
         paren: Token,
         arguments: Vec<Expr>,
     },
+    Get {
+        name: Token,
+        expr: Box<Expr>,
+    },
+    Set {
+        name: Token,
+        value: Box<Expr>,
+        object: Box<Expr>,
+    },
 }
