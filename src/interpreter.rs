@@ -15,6 +15,7 @@ use std::collections::HashMap;
 #[derive(Default, Debug, Clone)]
 enum FunctionType {
     Function,
+    Method,
     #[default]
     None,
 }
@@ -108,11 +109,22 @@ impl Interpreter {
                 );
             }
             Stmt::ClassStmt { name, methods } => {
+                let mut methods_list = vec![];
+                for method in methods {
+                    if let Stmt::FuncStmt { name, params, body } = method {
+                        methods_list.push(Function {
+                            name: name.lexeme,
+                            params: params.iter().map(|p| p.lexeme.clone()).collect(),
+                            body,
+                            closure: Some(self.current_environment.clone()),
+                        });
+                    }
+                }
                 self.current_environment.borrow_mut().define(
                     name.lexeme.clone(),
                     LoxValue::Class(crate::class::Class {
                         name: name.lexeme,
-                        methods,
+                        methods: methods_list,
                     }),
                 );
             }
@@ -435,6 +447,12 @@ impl Interpreter {
                     if let Some(v) = instance.borrow().fields.get(&name.lexeme) {
                         Ok(v.clone())
                     } else {
+                        let methods = instance.borrow().class.methods.clone();
+                        for method in methods {
+                            if method.name == name.lexeme {
+                                return Ok(LoxValue::Function(method));
+                            }
+                        }
                         Err(LoxError::GetError {
                             msg: format!(
                                 "failed to get value of undefined property '{}'",
@@ -508,24 +526,16 @@ impl Interpreter {
                 self.resolve_stmt(*body)?;
             }
             Stmt::FuncStmt { name, params, body } => {
+                self.resolve_function(name, body, params, FunctionType::Function)?;
+            }
+            Stmt::ClassStmt { name, methods } => {
                 self.declare(name.clone())?;
                 self.define(name);
-                let enclosing_fuction_type = self.current_function_type.clone();
-                self.current_function_type = FunctionType::Function;
-                self.begin_scope();
-                for param in params {
-                    self.declare(param.clone())?;
-                    self.define(param);
+                for method in methods {
+                    if let Stmt::FuncStmt { name, params, body } = method {
+                        self.resolve_function(name, body, params, FunctionType::Method)?;
+                    }
                 }
-                for stmt in body {
-                    self.resolve_stmt(stmt)?;
-                }
-                self.end_scope();
-                self.current_function_type = enclosing_fuction_type;
-            }
-            Stmt::ClassStmt { name, methods: _ } => {
-                self.declare(name.clone())?;
-                self.define(name)
             }
             Stmt::ReturnStmt { keyword, value } => {
                 if let FunctionType::None = self.current_function_type {
@@ -542,6 +552,29 @@ impl Interpreter {
         Ok(())
     }
 
+    fn resolve_function(
+        &mut self,
+        name: Token,
+        body: Vec<Stmt>,
+        params: Vec<Token>,
+        function_type: FunctionType,
+    ) -> Result<(), LoxError> {
+        self.declare(name.clone())?;
+        self.define(name);
+        let enclosing_fuction_type = self.current_function_type.clone();
+        self.current_function_type = function_type;
+        self.begin_scope();
+        for param in params {
+            self.declare(param.clone())?;
+            self.define(param);
+        }
+        for stmt in body {
+            self.resolve_stmt(stmt)?;
+        }
+        self.end_scope();
+        self.current_function_type = enclosing_fuction_type;
+        Ok(())
+    }
     fn resolve_expr(&mut self, expr: Expr) -> Result<(), LoxError> {
         match expr {
             Expr::Literal { value: _ } => (),

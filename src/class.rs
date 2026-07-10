@@ -1,10 +1,10 @@
-use crate::{callable::Callable, instance::Instance, statement::Stmt};
+use crate::{callable::Callable, function::Function, instance::Instance};
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Class {
     pub name: String,
-    pub methods: Vec<Stmt>,
+    pub methods: Vec<Function>,
 }
 impl Callable for Class {
     fn call(
