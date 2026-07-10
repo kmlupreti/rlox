@@ -35,7 +35,10 @@ impl Parser {
         let stmt = if self.check(TokenType::Var) {
             self.var_declaration()
         } else if self.check(TokenType::Fun) {
-            self.function("function")
+            self.advance();
+            self.func_declaration("function")
+        } else if self.check(TokenType::Class) {
+            self.class_declaration()
         } else {
             self.statement()
         };
@@ -57,8 +60,24 @@ impl Parser {
         }
     }
 
-    fn function(&mut self, kind: &str) -> ParserResult<Stmt> {
+    fn class_declaration(&mut self) -> ParserResult<Stmt> {
         self.advance();
+        let name = self.consume(TokenType::Identifier, String::from("expected class name"))?;
+        self.consume(
+            TokenType::LeftBrace,
+            String::from("expected '{'  after class name"),
+        )?;
+        let mut methods = vec![];
+        while !self.check(TokenType::Rightbrace) {
+            methods.push(self.func_declaration("method")?);
+        }
+        self.consume(
+            TokenType::Rightbrace,
+            String::from("expected '}'  at the end of class block"),
+        )?;
+        Ok(Stmt::ClassStmt { name, methods })
+    }
+    fn func_declaration(&mut self, kind: &str) -> ParserResult<Stmt> {
         let name = self.consume(TokenType::Identifier, format!("expect {} name", kind))?;
         self.consume(
             TokenType::LeftParen,

@@ -1,4 +1,4 @@
-use crate::callable::Callable;
+use crate::{class::Class, function::Function, instance::Instance};
 use std::fmt::Display;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -6,18 +6,21 @@ pub enum LoxValue {
     String(String),
     Number(f64),
     Boolean(bool),
-    Callable(Callable),
+    Function(Function),
+    Class(Class),
+    Instance(Instance),
     Null,
 }
 impl Display for LoxValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            LoxValue::Null => write!(f, "nil"),
             LoxValue::Number(n) => write!(f, "{n}"),
             LoxValue::String(s) => write!(f, "\"{s}\""),
             LoxValue::Boolean(b) => write!(f, "{b}"),
-            LoxValue::Callable(Callable::Class) => write!(f, "class"),
-            LoxValue::Null => write!(f, "nil"),
-            LoxValue::Callable(Callable::Func(function)) => {
+            LoxValue::Class(class) => write!(f, "class: {}", class.name),
+            LoxValue::Instance(instance) => write!(f, "instance of class: {}", instance.class.name),
+            LoxValue::Function(function) => {
                 write!(f, "fun {}()", function.name)
             }
         }

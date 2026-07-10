@@ -29,6 +29,10 @@ pub enum Stmt {
         params: Vec<Token>,
         body: Vec<Stmt>,
     },
+    ClassStmt {
+        name: Token,
+        methods: Vec<Stmt>,
+    },
     ReturnStmt {
         keyword: Token,
         value: Option<Expr>,

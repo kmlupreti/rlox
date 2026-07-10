@@ -5,10 +5,12 @@ use std::{fs::File, path::Path, process::exit};
 
 pub mod builtin_functions;
 pub mod callable;
+pub mod class;
 pub mod environment;
 pub mod error;
 pub mod expresssion;
 pub mod function;
+pub mod instance;
 pub mod interpreter;
 pub mod lox_value;
 pub mod parser;

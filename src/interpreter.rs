@@ -1,6 +1,6 @@
 use crate::{
     builtin_functions::declare_builtin_functions,
-    callable::{Callable, LoxCallable},
+    callable::Callable,
     environment::{EnvRef, Environment},
     error::LoxError,
     expresssion::Expr,
@@ -99,12 +99,21 @@ impl Interpreter {
             Stmt::FuncStmt { name, params, body } => {
                 self.current_environment.borrow_mut().define(
                     name.lexeme.clone(),
-                    LoxValue::Callable(Callable::Func(Function {
+                    LoxValue::Function(Function {
                         name: name.lexeme,
                         params: params.iter().map(|p| p.lexeme.clone()).collect(),
                         body,
                         closure: Some(self.current_environment.clone()),
-                    })),
+                    }),
+                );
+            }
+            Stmt::ClassStmt { name, methods } => {
+                self.current_environment.borrow_mut().define(
+                    name.lexeme.clone(),
+                    LoxValue::Class(crate::class::Class {
+                        name: name.lexeme,
+                        methods,
+                    }),
                 );
             }
             Stmt::ReturnStmt { keyword, value } => {
@@ -409,8 +418,11 @@ impl Interpreter {
                 for arg in arguments {
                     args.push(self.evaluate(arg)?);
                 }
-                if let LoxValue::Callable(callable) = callee {
-                    Ok(callable.call(self, args, paren.line)?)
+
+                if let LoxValue::Function(function) = callee {
+                    Ok(function.call(self, args, paren.line)?)
+                } else if let LoxValue::Class(class) = callee {
+                    Ok(class.call(self, args, paren.line)?)
                 } else {
                     Err(LoxError::RuntimeError {
                         line: paren.line,
@@ -471,6 +483,10 @@ impl Interpreter {
                 }
                 self.end_scope();
                 self.current_function_type = enclosing_fuction_type;
+            }
+            Stmt::ClassStmt { name, methods: _ } => {
+                self.declare(name.clone())?;
+                self.define(name)
             }
             Stmt::ReturnStmt { keyword, value } => {
                 if let FunctionType::None = self.current_function_type {

@@ -1,5 +1,3 @@
-use std::fmt::Display;
-
 use crate::token_type::TokenType;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -15,10 +13,5 @@ impl Token {
             lexeme,
             line,
         }
-    }
-}
-impl Display for Token {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?} {}", self.token_type, self.lexeme)
     }
 }

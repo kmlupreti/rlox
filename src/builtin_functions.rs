@@ -1,7 +1,4 @@
-use crate::{
-    callable::Callable, error::LoxError, function::Function, interpreter::Interpreter,
-    lox_value::LoxValue,
-};
+use crate::{error::LoxError, function::Function, interpreter::Interpreter, lox_value::LoxValue};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 struct BuiltInFunction<'a> {
@@ -23,12 +20,12 @@ pub fn declare_builtin_functions(interpreter: &mut Interpreter) {
         };
         interpreter.globals.borrow_mut().define(
             String::from(function.name),
-            LoxValue::Callable(Callable::Func(Function {
+            LoxValue::Function(Function {
                 name: String::from(function.name),
                 params: params.iter().map(|s| String::from(*s)).collect(),
                 body: vec![],
                 closure: None,
-            })),
+            }),
         );
     }
 }
