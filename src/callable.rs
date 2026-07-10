@@ -55,7 +55,7 @@ impl LoxCallable for Callable {
                     return_value = run_builtin_function(function, line)
                 } else {
                     if let Err(LoxError::Return { line: _, value }) =
-                        interpreter.run(function.body.clone())
+                        interpreter.execute(function.body.clone())
                     {
                         return_value = Ok(*value);
                     }

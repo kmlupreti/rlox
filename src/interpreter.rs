@@ -12,12 +12,19 @@ use crate::{
 };
 use std::collections::HashMap;
 
+#[derive(Default, Debug, Clone)]
+enum FunctionType {
+    Function,
+    #[default]
+    None,
+}
 #[derive(Default)]
 pub struct Interpreter {
     pub globals: EnvRef,
     pub current_environment: EnvRef,
     pub locals: HashMap<usize, usize>,
     scopes: Vec<HashMap<String, bool>>,
+    current_function_type: FunctionType,
 }
 impl Interpreter {
     pub fn new() -> Self {
@@ -26,12 +33,19 @@ impl Interpreter {
         declare_builtin_functions(&mut interpreter);
         interpreter
     }
-    pub fn run(&mut self, statements: Vec<Stmt>) -> Result<(), LoxError> {
-        for stmt in statements.clone() {
-            self.resolve_stmt(stmt)?;
-        }
+    pub fn interpret(&mut self, statements: Vec<Stmt>) -> Result<(), LoxError> {
+        self.resolve(statements.clone())?;
+        self.execute(statements)
+    }
+    pub fn execute(&mut self, statements: Vec<Stmt>) -> Result<(), LoxError> {
         for stmt in statements {
             self.execute_stmt(stmt)?;
+        }
+        Ok(())
+    }
+    pub fn resolve(&mut self, statements: Vec<Stmt>) -> Result<(), LoxError> {
+        for stmt in statements {
+            self.resolve_stmt(stmt)?;
         }
         Ok(())
     }
@@ -445,6 +459,8 @@ impl Interpreter {
             Stmt::FuncStmt { name, params, body } => {
                 self.declare(name.clone())?;
                 self.define(name);
+                let enclosing_fuction_type = self.current_function_type.clone();
+                self.current_function_type = FunctionType::Function;
                 self.begin_scope();
                 for param in params {
                     self.declare(param.clone())?;
@@ -454,8 +470,15 @@ impl Interpreter {
                     self.resolve_stmt(stmt)?;
                 }
                 self.end_scope();
+                self.current_function_type = enclosing_fuction_type;
             }
-            Stmt::ReturnStmt { keyword: _, value } => {
+            Stmt::ReturnStmt { keyword, value } => {
+                if let FunctionType::None = self.current_function_type {
+                    return Err(LoxError::ResolveError {
+                        line: keyword.line,
+                        msg: String::from("can't use return outside function"),
+                    });
+                }
                 if let Some(expr) = value {
                     self.resolve_expr(expr)?;
                 }
@@ -539,7 +562,10 @@ impl Interpreter {
             if current_scope.contains_key(&name.lexeme) {
                 return Err(LoxError::ResolveError {
                     line: name.line,
-                    msg: format!("variable with name '{}' already exists", name),
+                    msg: format!(
+                        "identifier '{}' is already declared in this scope",
+                        name.lexeme
+                    ),
                 });
             }
             current_scope.insert(name.lexeme, false);

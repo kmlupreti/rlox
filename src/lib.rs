@@ -32,7 +32,7 @@ where
     };
     let mut parser = Parser::new(tokens.clone());
     let statements = parser.parse();
-    if let Err(e) = Interpreter::new().run(statements) {
+    if let Err(e) = Interpreter::new().interpret(statements) {
         eprintln!("{e}");
         exit(70);
     }
@@ -56,7 +56,7 @@ pub fn run_prompt() -> io::Result<()> {
         };
         let mut parser = Parser::new(tokens.clone());
         let statements = parser.parse();
-        if let Err(e) = interpreter.run(statements) {
+        if let Err(e) = interpreter.interpret(statements) {
             eprintln!("{e}");
         }
     }
