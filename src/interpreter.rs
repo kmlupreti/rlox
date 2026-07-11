@@ -651,12 +651,10 @@ impl Interpreter {
                 self.resolve_expr(*expr)?;
             }
             Expr::Set {
-                name,
+                name: _,
                 value,
                 object,
             } => {
-                self.declare(name.clone())?;
-                self.define(name);
                 self.resolve_expr(*value)?;
                 self.resolve_expr(*object)?;
             }
@@ -693,7 +691,6 @@ impl Interpreter {
     fn declare(&mut self, name: Token) -> LoxResult<()> {
         if let Some(current_scope) = self.scopes.last_mut() {
             if current_scope.contains_key(&name.lexeme) {
-                println!("scopes: {:?}", self.scopes);
                 return Err(LoxError::ResolveError {
                     line: name.line,
                     msg: format!(
