@@ -1,25 +1,28 @@
 class User {
+	init(id,name) {
+		this.id =id;
+		this.name = name;
+	}
+
 	print_details() {
-	print"--------------";
-	print "user details:";
-	print"--------------";
-	print "User ID: ";
-	print this.id;
-	print"--------------";
-	print "Name :";
-	print this.name;
-	print"--------------";
-	print "Age: ";
-	print this.age;
-	print"--------------";
-	print "Balance: ";
-	print this.balance;
-	print"--------------";
+		print"--------------";
+		print "user details:";
+		print"--------------";
+		print "User ID: ";
+		print this.id;
+		print"--------------";
+		print "Name :";
+		print this.name;
+		print"--------------";
+		print "Age: ";
+		print this.age;
+		print"--------------";
+		print "Balance: ";
+		print this.balance;
+		print"--------------";
 	}
 }
-var user = User();
-user.name = "Kamal";
-user.id = 100;
+var user = User("Kamal",100);
 user.age = 29;
 user.balance =123.45;
 user.is_active = true;
