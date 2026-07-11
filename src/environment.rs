@@ -1,4 +1,8 @@
-use crate::{error::LoxError, lox_value::LoxValue, token::Token};
+use crate::{
+    error::LoxError,
+    lox_value::{LoxValue, LoxValueResult},
+    token::Token,
+};
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 pub type EnvRef = Rc<RefCell<Environment>>;
@@ -21,7 +25,7 @@ impl Environment {
     pub fn define(&mut self, name: String, value: LoxValue) {
         self.values.insert(name, value);
     }
-    pub fn get_at(&self, name: Token, distance: usize) -> Result<LoxValue, LoxError> {
+    pub fn get_at(&self, name: Token, distance: usize) -> LoxValueResult {
         if distance == 0
             && let Some(v) = self.values.get(&name.lexeme)
         {
@@ -45,12 +49,7 @@ impl Environment {
         }
         Some(current_env)
     }
-    pub fn assign_at(
-        &mut self,
-        name: Token,
-        value: LoxValue,
-        distance: usize,
-    ) -> Result<LoxValue, LoxError> {
+    pub fn assign_at(&mut self, name: Token, value: LoxValue, distance: usize) -> LoxValueResult {
         if distance == 0 && self.values.contains_key(&name.lexeme) {
             Ok(self.values.insert(name.lexeme, value).unwrap())
         } else if let Some(env) = self.ancestor(distance)

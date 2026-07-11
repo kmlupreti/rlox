@@ -1,4 +1,9 @@
-use crate::{error::LoxError, function::Function, interpreter::Interpreter, lox_value::LoxValue};
+use crate::{
+    error::LoxError,
+    function::Function,
+    interpreter::Interpreter,
+    lox_value::{LoxValue, LoxValueResult},
+};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 struct BuiltInFunction<'a> {
@@ -30,7 +35,7 @@ pub fn declare_builtin_functions(interpreter: &mut Interpreter) {
     }
 }
 
-pub fn run_builtin_function(function: &Function, line: usize) -> Result<LoxValue, LoxError> {
+pub fn run_builtin_function(function: &Function, line: usize) -> LoxValueResult {
     match function.name.as_str() {
         "clock" => Ok(LoxValue::Number(
             SystemTime::now()

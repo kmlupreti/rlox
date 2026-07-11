@@ -4,7 +4,7 @@ use crate::{
     environment::{EnvRef, Environment},
     error::LoxError,
     interpreter::Interpreter,
-    lox_value::LoxValue,
+    lox_value::{LoxValue, LoxValueResult},
     statement::Stmt,
 };
 
@@ -22,7 +22,7 @@ impl Callable for Function {
         interpreter: &mut Interpreter,
         args: Vec<LoxValue>,
         line: usize,
-    ) -> Result<LoxValue, LoxError> {
+    ) -> LoxValueResult {
         if args.len() >= 255 {
             return Err(LoxError::CallError {
                 msg: String::from("can't have more than 255 arguments"),

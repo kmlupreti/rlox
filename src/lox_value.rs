@@ -1,5 +1,7 @@
-use crate::{class::Class, function::Function, instance::Instance};
+use crate::{class::Class, error::LoxResult, function::Function, instance::Instance};
 use std::{cell::RefCell, fmt::Display, rc::Rc};
+
+pub type LoxValueResult = LoxResult<LoxValue>;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum LoxValue {

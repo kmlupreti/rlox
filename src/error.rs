@@ -1,6 +1,8 @@
 use crate::{lox_value::LoxValue, token::Token, token_type::TokenType};
 use std::fmt::Display;
 
+pub type LoxResult<T> = Result<T, LoxError>;
+
 pub enum LoxError {
     ScanError,
     UnexpectedChar { char: char, line: usize },

@@ -1,9 +1,11 @@
 use crate::{
-    error::LoxError, expresssion::Expr, statement::Stmt, token::Token, token_type::TokenType,
+    error::{LoxError, LoxResult},
+    expresssion::Expr,
+    statement::Stmt,
+    token::Token,
+    token_type::TokenType,
 };
 use std::str;
-
-type ParserResult<T> = Result<T, LoxError>;
 
 pub struct Parser {
     tokens: Vec<Token>,
@@ -59,7 +61,7 @@ impl Parser {
         }
     }
 
-    fn class_declaration(&mut self) -> ParserResult<Stmt> {
+    fn class_declaration(&mut self) -> LoxResult<Stmt> {
         self.advance();
         let name = self.consume(TokenType::Identifier, String::from("expected class name"))?;
         self.consume(
@@ -76,7 +78,7 @@ impl Parser {
         )?;
         Ok(Stmt::ClassStmt { name, methods })
     }
-    fn func_declaration(&mut self, kind: &str) -> ParserResult<Stmt> {
+    fn func_declaration(&mut self, kind: &str) -> LoxResult<Stmt> {
         let name = self.consume(TokenType::Identifier, format!("expect {} name", kind))?;
         self.consume(
             TokenType::LeftParen,
@@ -97,7 +99,7 @@ impl Parser {
         };
         Ok(Stmt::FuncStmt { name, params, body })
     }
-    fn parameters(&mut self) -> ParserResult<Vec<Token>> {
+    fn parameters(&mut self) -> LoxResult<Vec<Token>> {
         let mut params = vec![];
         params.push(self.consume(TokenType::Identifier, String::from("expected a parameter"))?);
         while self.check(TokenType::Comma) {
@@ -106,7 +108,7 @@ impl Parser {
         }
         Ok(params)
     }
-    fn var_declaration(&mut self) -> ParserResult<Stmt> {
+    fn var_declaration(&mut self) -> LoxResult<Stmt> {
         self.advance();
         let name = self.consume(
             TokenType::Identifier,
@@ -129,7 +131,7 @@ impl Parser {
         )?;
         Ok(Stmt::VarDeclStmt { name, initializer })
     }
-    fn statement(&mut self) -> ParserResult<Stmt> {
+    fn statement(&mut self) -> LoxResult<Stmt> {
         if self.check(TokenType::Print) {
             self.print_stmt()
         } else if self.check(TokenType::LeftBrace) {
@@ -147,7 +149,7 @@ impl Parser {
         }
     }
 
-    fn return_stmt(&mut self) -> ParserResult<Stmt> {
+    fn return_stmt(&mut self) -> LoxResult<Stmt> {
         self.advance();
         let value = if !self.check(TokenType::Semicolon) {
             Some(self.expression()?)
@@ -163,7 +165,7 @@ impl Parser {
             value,
         })
     }
-    fn for_stmt(&mut self) -> ParserResult<Stmt> {
+    fn for_stmt(&mut self) -> LoxResult<Stmt> {
         self.advance();
         self.consume(TokenType::LeftParen, String::from("missing '('"))?;
         let initializer = if self.check(TokenType::Var) {
@@ -220,7 +222,7 @@ impl Parser {
             Ok(while_stmt)
         }
     }
-    fn while_stmt(&mut self) -> ParserResult<Stmt> {
+    fn while_stmt(&mut self) -> LoxResult<Stmt> {
         self.advance();
         self.consume(TokenType::LeftParen, String::from("missing '('"))?;
         let condition = self.expression()?;
@@ -228,7 +230,7 @@ impl Parser {
         let body = Box::new(self.statement()?);
         Ok(Stmt::WhileStmt { condition, body })
     }
-    fn if_stmt(&mut self) -> ParserResult<Stmt> {
+    fn if_stmt(&mut self) -> LoxResult<Stmt> {
         self.advance();
         self.consume(TokenType::LeftParen, String::from("missing '('"))?;
         let condition = self.expression()?;
@@ -245,7 +247,7 @@ impl Parser {
             else_branch,
         })
     }
-    fn print_stmt(&mut self) -> ParserResult<Stmt> {
+    fn print_stmt(&mut self) -> LoxResult<Stmt> {
         self.advance();
         let expr = self.expression()?;
         self.consume(
@@ -254,7 +256,7 @@ impl Parser {
         )?;
         Ok(Stmt::PrintStmt { expr })
     }
-    fn expr_stmt(&mut self) -> ParserResult<Stmt> {
+    fn expr_stmt(&mut self) -> LoxResult<Stmt> {
         let expr = self.expression()?;
         self.consume(
             TokenType::Semicolon,
@@ -262,7 +264,7 @@ impl Parser {
         )?;
         Ok(Stmt::ExprStmt { expr })
     }
-    fn block_stmt(&mut self) -> ParserResult<Stmt> {
+    fn block_stmt(&mut self) -> LoxResult<Stmt> {
         self.advance();
         let mut statements = vec![];
         while !self.check(TokenType::Rightbrace) && !self.is_at_end() {
@@ -274,10 +276,10 @@ impl Parser {
         )?;
         Ok(Stmt::BlockStmt { statements })
     }
-    fn expression(&mut self) -> ParserResult<Expr> {
+    fn expression(&mut self) -> LoxResult<Expr> {
         self.assignment()
     }
-    fn assignment(&mut self) -> ParserResult<Expr> {
+    fn assignment(&mut self) -> LoxResult<Expr> {
         let expr = self.logic_or()?;
         if self.check(TokenType::Equal) {
             self.advance(); // consume = 
@@ -302,7 +304,7 @@ impl Parser {
             Ok(expr)
         }
     }
-    fn logic_or(&mut self) -> ParserResult<Expr> {
+    fn logic_or(&mut self) -> LoxResult<Expr> {
         let left = self.logic_and()?;
         let operator = self.peek().clone();
         if self.check(TokenType::Or) {
@@ -317,7 +319,7 @@ impl Parser {
             Ok(left)
         }
     }
-    fn logic_and(&mut self) -> ParserResult<Expr> {
+    fn logic_and(&mut self) -> LoxResult<Expr> {
         let left = self.equality()?;
         let operator = self.peek().clone();
         if self.check(TokenType::And) {
@@ -332,7 +334,7 @@ impl Parser {
             Ok(left)
         }
     }
-    fn equality(&mut self) -> ParserResult<Expr> {
+    fn equality(&mut self) -> LoxResult<Expr> {
         let mut expr = self.comparision()?;
         while self.match_types(vec![TokenType::EqualEqual, TokenType::BangEqual]) {
             let operator = self.previous().clone();
@@ -345,7 +347,7 @@ impl Parser {
         }
         Ok(expr)
     }
-    fn comparision(&mut self) -> ParserResult<Expr> {
+    fn comparision(&mut self) -> LoxResult<Expr> {
         let mut expr = self.term()?;
         while self.match_types(vec![
             TokenType::Greater,
@@ -363,7 +365,7 @@ impl Parser {
         }
         Ok(expr)
     }
-    fn term(&mut self) -> ParserResult<Expr> {
+    fn term(&mut self) -> LoxResult<Expr> {
         let mut expr = self.factor()?;
         while self.match_types(vec![TokenType::Plus, TokenType::Minus]) {
             let operator = self.previous().clone();
@@ -376,7 +378,7 @@ impl Parser {
         }
         Ok(expr)
     }
-    fn factor(&mut self) -> ParserResult<Expr> {
+    fn factor(&mut self) -> LoxResult<Expr> {
         let mut expr = self.unary()?;
         while self.match_types(vec![TokenType::Star, TokenType::Slash]) {
             let operator = self.previous().clone();
@@ -389,7 +391,7 @@ impl Parser {
         }
         Ok(expr)
     }
-    fn unary(&mut self) -> ParserResult<Expr> {
+    fn unary(&mut self) -> LoxResult<Expr> {
         if self.match_types(vec![TokenType::Minus, TokenType::Bang]) {
             let operator = self.previous().clone();
             let right = Box::new(self.unary()?);
@@ -398,7 +400,7 @@ impl Parser {
             self.call()
         }
     }
-    fn call(&mut self) -> ParserResult<Expr> {
+    fn call(&mut self) -> LoxResult<Expr> {
         let mut expr = self.primary()?;
         loop {
             if self.check(TokenType::LeftParen) {
@@ -437,7 +439,7 @@ impl Parser {
 
         Ok(expr)
     }
-    fn arguments(&mut self) -> ParserResult<Vec<Expr>> {
+    fn arguments(&mut self) -> LoxResult<Vec<Expr>> {
         let mut arguments = vec![];
         arguments.push(self.expression()?);
         while self.check(TokenType::Comma) {
@@ -452,7 +454,7 @@ impl Parser {
         }
         Ok(arguments)
     }
-    fn primary(&mut self) -> ParserResult<Expr> {
+    fn primary(&mut self) -> LoxResult<Expr> {
         match self.peek().token_type {
             TokenType::False | TokenType::True | TokenType::Nil => Ok(Expr::Literal {
                 value: self.advance().clone(),
@@ -514,7 +516,7 @@ impl Parser {
         }
         false
     }
-    fn consume(&mut self, token_type: TokenType, error_msg: String) -> ParserResult<Token> {
+    fn consume(&mut self, token_type: TokenType, error_msg: String) -> LoxResult<Token> {
         if self.check(token_type) {
             Ok(self.advance().clone())
         } else {

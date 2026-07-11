@@ -2,10 +2,10 @@ use crate::{
     builtin_functions::declare_builtin_functions,
     callable::Callable,
     environment::{EnvRef, Environment},
-    error::LoxError,
+    error::{LoxError, LoxResult},
     expresssion::Expr,
     function::Function,
-    lox_value::LoxValue,
+    lox_value::{LoxValue, LoxValueResult},
     statement::Stmt,
     token::Token,
     token_type::TokenType,
@@ -41,23 +41,23 @@ impl Interpreter {
         declare_builtin_functions(&mut interpreter);
         interpreter
     }
-    pub fn interpret(&mut self, statements: Vec<Stmt>) -> Result<(), LoxError> {
+    pub fn interpret(&mut self, statements: Vec<Stmt>) -> LoxResult<()> {
         self.resolve(statements.clone())?;
         self.execute(statements)
     }
-    pub fn execute(&mut self, statements: Vec<Stmt>) -> Result<(), LoxError> {
+    pub fn execute(&mut self, statements: Vec<Stmt>) -> LoxResult<()> {
         for stmt in statements {
             self.execute_stmt(stmt)?;
         }
         Ok(())
     }
-    pub fn resolve(&mut self, statements: Vec<Stmt>) -> Result<(), LoxError> {
+    pub fn resolve(&mut self, statements: Vec<Stmt>) -> LoxResult<()> {
         for stmt in statements {
             self.resolve_stmt(stmt)?;
         }
         Ok(())
     }
-    pub fn execute_stmt(&mut self, statement: Stmt) -> Result<(), LoxError> {
+    pub fn execute_stmt(&mut self, statement: Stmt) -> LoxResult<()> {
         match statement {
             Stmt::ExprStmt { expr } => {
                 self.evaluate(expr)?;
@@ -153,7 +153,7 @@ impl Interpreter {
         Ok(())
     }
 
-    pub fn evaluate(&mut self, expr: Expr) -> Result<LoxValue, LoxError> {
+    pub fn evaluate(&mut self, expr: Expr) -> LoxValueResult {
         match expr {
             Expr::Literal { value } => match value.token_type {
                 TokenType::String => Ok(LoxValue::String(
@@ -482,13 +482,13 @@ impl Interpreter {
         }
     }
 
-    pub fn lookup(&self, name: Token, id: usize) -> Result<LoxValue, LoxError> {
+    pub fn lookup(&self, name: Token, id: usize) -> LoxValueResult {
         match self.locals.get(&id) {
             Some(distance) => self.current_environment.borrow().get_at(name, *distance),
             None => self.globals.borrow().get_at(name, 0),
         }
     }
-    pub fn resolve_stmt(&mut self, stmt: Stmt) -> Result<(), LoxError> {
+    pub fn resolve_stmt(&mut self, stmt: Stmt) -> LoxResult<()> {
         match stmt {
             Stmt::ExprStmt { expr } => {
                 self.resolve_expr(expr)?;
@@ -565,7 +565,7 @@ impl Interpreter {
         body: Vec<Stmt>,
         params: Vec<Token>,
         function_type: FunctionType,
-    ) -> Result<(), LoxError> {
+    ) -> LoxResult<()> {
         self.declare(name.clone())?;
         self.define(name);
         let enclosing_fuction_type = self.current_function_type.clone();
@@ -582,7 +582,7 @@ impl Interpreter {
         self.current_function_type = enclosing_fuction_type;
         Ok(())
     }
-    fn resolve_expr(&mut self, expr: Expr) -> Result<(), LoxError> {
+    fn resolve_expr(&mut self, expr: Expr) -> LoxResult<()> {
         match expr {
             Expr::Literal { value: _ } => (),
             Expr::Unary { operator: _, right } => self.resolve_expr(*right)?,
@@ -676,7 +676,7 @@ impl Interpreter {
             current_scope.insert(name.lexeme, true);
         }
     }
-    fn declare(&mut self, name: Token) -> Result<(), LoxError> {
+    fn declare(&mut self, name: Token) -> LoxResult<()> {
         if let Some(current_scope) = self.scopes.last_mut() {
             if current_scope.contains_key(&name.lexeme) {
                 return Err(LoxError::ResolveError {

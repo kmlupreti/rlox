@@ -1,4 +1,9 @@
-use crate::{class::Class, error::LoxError, lox_value::LoxValue, token::Token};
+use crate::{
+    class::Class,
+    error::LoxError,
+    lox_value::{LoxValue, LoxValueResult},
+    token::Token,
+};
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -7,7 +12,7 @@ pub struct Instance {
     pub fields: HashMap<String, LoxValue>,
 }
 impl Instance {
-    pub fn get(&self, name: &Token, instance: LoxValue) -> Result<LoxValue, LoxError> {
+    pub fn get(&self, name: &Token, instance: LoxValue) -> LoxValueResult {
         if let Some(v) = self.fields.get(&name.lexeme) {
             Ok(v.clone())
         } else {
