@@ -61,3 +61,12 @@ impl Callable for Function {
         self.params.len()
     }
 }
+impl Function {
+    pub fn bind(&mut self, instance: LoxValue) {
+        let instance_env = Environment::new_enclosing(self.closure.as_ref().unwrap().clone());
+        instance_env
+            .borrow_mut()
+            .define("this".to_string(), instance);
+        self.closure = Some(instance_env);
+    }
+}

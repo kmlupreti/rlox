@@ -19,6 +19,12 @@ enum FunctionType {
     #[default]
     None,
 }
+#[derive(Default, Debug, Clone)]
+enum ClassType {
+    Class,
+    #[default]
+    None,
+}
 #[derive(Default)]
 pub struct Interpreter {
     pub globals: EnvRef,
@@ -26,6 +32,7 @@ pub struct Interpreter {
     pub locals: HashMap<usize, usize>,
     scopes: Vec<HashMap<String, bool>>,
     current_function_type: FunctionType,
+    current_class_type: ClassType,
 }
 impl Interpreter {
     pub fn new() -> Self {
@@ -373,11 +380,7 @@ impl Interpreter {
                     }),
                 }
             }
-            Expr::Identifier { name, id } => match self.locals.get(&id) {
-                Some(distance) => self.current_environment.borrow().get_at(name, *distance),
-                None => self.globals.borrow().get_at(name, 0),
-            },
-
+            Expr::Identifier { name, id } => self.lookup(name, id),
             Expr::Assign { name, value, id } => {
                 let value = self.evaluate(*value)?;
                 if let Some(distance) = self.locals.get(&id) {
@@ -448,22 +451,7 @@ impl Interpreter {
             Expr::Get { name, expr } => {
                 let expr_value = self.evaluate(*expr)?;
                 if let LoxValue::Instance(instance) = expr_value.clone() {
-                    if let Some(v) = instance.borrow().fields.get(&name.lexeme) {
-                        Ok(v.clone())
-                    } else if let Some(method) = instance.borrow().class.methods.get(&name.lexeme) {
-                        let mut method = method.clone();
-                        let instance_env = Environment::new_enclosing(method.closure.unwrap());
-                        instance_env
-                            .borrow_mut()
-                            .define("this".to_string(), expr_value);
-                        method.closure = Some(instance_env);
-                        Ok(LoxValue::Function(method))
-                    } else {
-                        Err(LoxError::GetError {
-                            msg: format!("undefined property or method'{}'", name.lexeme),
-                            line: name.line,
-                        })
-                    }
+                    instance.borrow().get(&name, expr_value)
                 } else {
                     Err(LoxError::GetError {
                         msg: format!("'{}' is not an instance of a class", name.lexeme),
@@ -490,13 +478,16 @@ impl Interpreter {
                     })
                 }
             }
-            Expr::This { keyword, id } => match self.locals.get(&id) {
-                Some(distance) => self.current_environment.borrow().get_at(keyword, *distance),
-                None => self.globals.borrow().get_at(keyword, 0),
-            },
+            Expr::This { keyword, id } => self.lookup(keyword, id),
         }
     }
 
+    pub fn lookup(&self, name: Token, id: usize) -> Result<LoxValue, LoxError> {
+        match self.locals.get(&id) {
+            Some(distance) => self.current_environment.borrow().get_at(name, *distance),
+            None => self.globals.borrow().get_at(name, 0),
+        }
+    }
     pub fn resolve_stmt(&mut self, stmt: Stmt) -> Result<(), LoxError> {
         match stmt {
             Stmt::ExprStmt { expr } => {
@@ -538,6 +529,8 @@ impl Interpreter {
             Stmt::ClassStmt { name, methods } => {
                 self.declare(name.clone())?;
                 self.define(name);
+                let current_class_type = self.current_class_type.clone();
+                self.current_class_type = ClassType::Class;
                 self.begin_scope();
                 self.scopes
                     .last_mut()
@@ -549,6 +542,7 @@ impl Interpreter {
                     }
                 }
                 self.end_scope();
+                self.current_class_type = current_class_type;
             }
             Stmt::ReturnStmt { keyword, value } => {
                 if let FunctionType::None = self.current_function_type {
@@ -652,9 +646,15 @@ impl Interpreter {
                 self.resolve_expr(*value)?;
                 self.resolve_expr(*object)?;
             }
-            Expr::This { keyword, id } => {
-                self.resolve_local(id, keyword);
-            }
+            Expr::This { keyword, id } => match self.current_class_type {
+                ClassType::Class => self.resolve_local(id, keyword),
+                ClassType::None => {
+                    return Err(LoxError::ResolveError {
+                        line: keyword.line,
+                        msg: String::from("can't use this keyword outside class"),
+                    });
+                }
+            },
         }
         Ok(())
     }
