@@ -12,10 +12,11 @@ use crate::{
 };
 use std::collections::HashMap;
 
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug, Clone, Copy)]
 enum FunctionType {
     Function,
     Method,
+    Initializer,
     #[default]
     None,
 }
@@ -538,23 +539,36 @@ impl Interpreter {
                     .insert(String::from("this"), true);
                 for method in methods {
                     if let Stmt::FuncStmt { name, params, body } = method {
-                        self.resolve_function(name, body, params, FunctionType::Method)?;
+                        let function_type = if name.lexeme.as_str() == "init" {
+                            FunctionType::Initializer
+                        } else {
+                            FunctionType::Method
+                        };
+                        self.resolve_function(name, body, params, function_type)?;
                     }
                 }
                 self.end_scope();
                 self.current_class_type = current_class_type;
             }
-            Stmt::ReturnStmt { keyword, value } => {
-                if let FunctionType::None = self.current_function_type {
+            Stmt::ReturnStmt { keyword, value } => match self.current_function_type {
+                FunctionType::Function | FunctionType::Method => {
+                    if let Some(value) = value {
+                        self.resolve_expr(value)?;
+                    }
+                }
+                FunctionType::Initializer => {
                     return Err(LoxError::ResolveError {
                         line: keyword.line,
-                        msg: String::from("can't use return outside function"),
+                        msg: String::from("can't return a value from initializer"),
                     });
                 }
-                if let Some(expr) = value {
-                    self.resolve_expr(expr)?;
+                FunctionType::None => {
+                    return Err(LoxError::ResolveError {
+                        line: keyword.line,
+                        msg: String::from("can only return from function or method"),
+                    });
                 }
-            }
+            },
         }
         Ok(())
     }
@@ -568,7 +582,7 @@ impl Interpreter {
     ) -> LoxResult<()> {
         self.declare(name.clone())?;
         self.define(name);
-        let enclosing_fuction_type = self.current_function_type.clone();
+        let enclosing_fuction_type = self.current_function_type;
         self.current_function_type = function_type;
         self.begin_scope();
         for param in params {
@@ -679,6 +693,7 @@ impl Interpreter {
     fn declare(&mut self, name: Token) -> LoxResult<()> {
         if let Some(current_scope) = self.scopes.last_mut() {
             if current_scope.contains_key(&name.lexeme) {
+                println!("scopes: {:?}", self.scopes);
                 return Err(LoxError::ResolveError {
                     line: name.line,
                     msg: format!(

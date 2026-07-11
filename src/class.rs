@@ -1,10 +1,8 @@
 use crate::{
     callable::Callable,
-    error::{LoxError, LoxResult},
     function::Function,
     instance::Instance,
     lox_value::{LoxValue, LoxValueResult},
-    token::Token,
 };
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
@@ -13,32 +11,37 @@ pub struct Class {
     pub name: String,
     pub methods: HashMap<String, Function>,
 }
+
+impl Class {
+    pub fn get_method(&self, name: &str) -> Option<&Function> {
+        self.methods.get(name)
+    }
+}
+
 impl Callable for Class {
     fn call(
         &self,
-        _interpreter: &mut crate::interpreter::Interpreter,
-        _args: Vec<LoxValue>,
-        _line: usize,
+        interpreter: &mut crate::interpreter::Interpreter,
+        args: Vec<LoxValue>,
+        line: usize,
     ) -> LoxValueResult {
+        self.check_args(args.len(), line)?;
         let instance = Rc::new(RefCell::new(Instance {
             class: self.clone(),
             fields: HashMap::new(),
         }));
+        if let Some(initializer) = self.get_method("init") {
+            let mut initializer = initializer.clone();
+            initializer.bind(LoxValue::Instance(instance.clone()));
+            initializer.call(interpreter, args, line)?;
+        }
         Ok(LoxValue::Instance(instance))
     }
     fn arity(&self) -> usize {
-        0
-    }
-}
-impl Class {
-    pub fn get_method(&self, name: &Token) -> LoxResult<Function> {
-        if let Some(method) = self.methods.get(&name.lexeme) {
-            Ok(method.clone())
+        if let Some(initializer) = self.get_method("init") {
+            initializer.params.len()
         } else {
-            Err(LoxError::GetError {
-                msg: format!("undefined method'{}'", name.lexeme),
-                line: name.line,
-            })
+            0
         }
     }
 }

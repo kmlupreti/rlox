@@ -16,13 +16,14 @@ impl Instance {
         if let Some(v) = self.fields.get(&name.lexeme) {
             Ok(v.clone())
         } else {
-            match self.class.get_method(name) {
-                Ok(mut method) => {
+            match self.class.get_method(&name.lexeme) {
+                Some(method) => {
+                    let mut method = method.clone();
                     method.bind(instance);
                     Ok(LoxValue::Function(method))
                 }
-                Err(_) => Err(LoxError::GetError {
-                    msg: format!("undefined property or method'{}'", name.lexeme),
+                None => Err(LoxError::GetError {
+                    msg: format!("undefined property or method '{}'", name.lexeme),
                     line: name.line,
                 }),
             }
