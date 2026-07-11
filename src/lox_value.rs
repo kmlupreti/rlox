@@ -16,7 +16,7 @@ impl Display for LoxValue {
         match self {
             LoxValue::Null => write!(f, "nil"),
             LoxValue::Number(n) => write!(f, "{n}"),
-            LoxValue::String(s) => write!(f, "\"{s}\""),
+            LoxValue::String(s) => write!(f, "{s}"),
             LoxValue::Boolean(b) => write!(f, "{b}"),
             LoxValue::Class(class) => write!(f, "class: {}", class.name),
             LoxValue::Instance(instance) => {

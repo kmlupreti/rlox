@@ -109,22 +109,25 @@ impl Interpreter {
                 );
             }
             Stmt::ClassStmt { name, methods } => {
-                let mut methods_list = vec![];
+                let mut methods_map = HashMap::new();
                 for method in methods {
                     if let Stmt::FuncStmt { name, params, body } = method {
-                        methods_list.push(Function {
-                            name: name.lexeme,
-                            params: params.iter().map(|p| p.lexeme.clone()).collect(),
-                            body,
-                            closure: Some(self.current_environment.clone()),
-                        });
+                        methods_map.insert(
+                            name.lexeme.clone(),
+                            Function {
+                                name: name.lexeme,
+                                params: params.iter().map(|p| p.lexeme.clone()).collect(),
+                                body,
+                                closure: Some(self.current_environment.clone()),
+                            },
+                        );
                     }
                 }
                 self.current_environment.borrow_mut().define(
                     name.lexeme.clone(),
                     LoxValue::Class(crate::class::Class {
                         name: name.lexeme,
-                        methods: methods_list,
+                        methods: methods_map,
                     }),
                 );
             }
@@ -438,32 +441,32 @@ impl Interpreter {
                 } else {
                     Err(LoxError::RuntimeError {
                         line: paren.line,
-                        msg: "can only call function and clases".to_string(),
+                        msg: "can only call function, method or class".to_string(),
                     })
                 }
             }
             Expr::Get { name, expr } => {
-                if let LoxValue::Instance(instance) = self.evaluate(*expr)? {
+                let expr_value = self.evaluate(*expr)?;
+                if let LoxValue::Instance(instance) = expr_value.clone() {
                     if let Some(v) = instance.borrow().fields.get(&name.lexeme) {
                         Ok(v.clone())
+                    } else if let Some(method) = instance.borrow().class.methods.get(&name.lexeme) {
+                        let mut method = method.clone();
+                        let instance_env = Environment::new_enclosing(method.closure.unwrap());
+                        instance_env
+                            .borrow_mut()
+                            .define("this".to_string(), expr_value);
+                        method.closure = Some(instance_env);
+                        Ok(LoxValue::Function(method))
                     } else {
-                        let methods = instance.borrow().class.methods.clone();
-                        for method in methods {
-                            if method.name == name.lexeme {
-                                return Ok(LoxValue::Function(method));
-                            }
-                        }
                         Err(LoxError::GetError {
-                            msg: format!(
-                                "failed to get value of undefined property '{}'",
-                                name.lexeme
-                            ),
+                            msg: format!("undefined property or method'{}'", name.lexeme),
                             line: name.line,
                         })
                     }
                 } else {
                     Err(LoxError::GetError {
-                        msg: String::from("unable to get property of invalid instance"),
+                        msg: format!("'{}' is not an instance of a class", name.lexeme),
                         line: name.line,
                     })
                 }
@@ -487,6 +490,10 @@ impl Interpreter {
                     })
                 }
             }
+            Expr::This { keyword, id } => match self.locals.get(&id) {
+                Some(distance) => self.current_environment.borrow().get_at(keyword, *distance),
+                None => self.globals.borrow().get_at(keyword, 0),
+            },
         }
     }
 
@@ -531,11 +538,17 @@ impl Interpreter {
             Stmt::ClassStmt { name, methods } => {
                 self.declare(name.clone())?;
                 self.define(name);
+                self.begin_scope();
+                self.scopes
+                    .last_mut()
+                    .unwrap()
+                    .insert(String::from("this"), true);
                 for method in methods {
                     if let Stmt::FuncStmt { name, params, body } = method {
                         self.resolve_function(name, body, params, FunctionType::Method)?;
                     }
                 }
+                self.end_scope();
             }
             Stmt::ReturnStmt { keyword, value } => {
                 if let FunctionType::None = self.current_function_type {
@@ -638,6 +651,9 @@ impl Interpreter {
                 self.define(name);
                 self.resolve_expr(*value)?;
                 self.resolve_expr(*object)?;
+            }
+            Expr::This { keyword, id } => {
+                self.resolve_local(id, keyword);
             }
         }
         Ok(())

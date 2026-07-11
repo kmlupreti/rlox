@@ -460,6 +460,10 @@ impl Parser {
             TokenType::Number | TokenType::String => Ok(Expr::Literal {
                 value: self.advance().clone(),
             }),
+            TokenType::This => Ok(Expr::This {
+                keyword: self.advance().clone(),
+                id: self.next_node_id(),
+            }),
             TokenType::LeftParen => {
                 self.advance();
                 let expr = Box::new(self.expression()?);

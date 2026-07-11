@@ -4,7 +4,7 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 #[derive(Debug, Clone, PartialEq)]
 pub struct Class {
     pub name: String,
-    pub methods: Vec<Function>,
+    pub methods: HashMap<String, Function>,
 }
 impl Callable for Class {
     fn call(

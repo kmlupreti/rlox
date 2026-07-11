@@ -45,4 +45,8 @@ pub enum Expr {
         value: Box<Expr>,
         object: Box<Expr>,
     },
+    This {
+        keyword: Token,
+        id: usize,
+    },
 }
