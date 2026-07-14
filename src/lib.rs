@@ -32,7 +32,7 @@ where
         .interpret(Parser::new(scanner::Scanner::new(&buffer).scan_tokens()?.clone()).parse())
 }
 pub fn run_prompt() -> LoxResult<()> {
-    let stdin = io::stdin();
+    let mut stdin = io::stdin().lock();
     let mut interpreter = Interpreter::new();
     loop {
         print!("> ");
