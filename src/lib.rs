@@ -42,8 +42,7 @@ pub fn run_prompt() -> LoxResult<()> {
         if line.is_empty() {
             break;
         }
-        let mut scanner = scanner::Scanner::new(&line);
-        if let Ok(tokens) = scanner.scan_tokens()
+        if let Ok(tokens) = scanner::Scanner::new(&line).scan_tokens()
             && let Err(e) = interpreter.interpret(Parser::new(tokens.clone()).parse())
         {
             eprintln!("{e}");
