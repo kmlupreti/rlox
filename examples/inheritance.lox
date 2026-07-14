@@ -1,0 +1,22 @@
+
+class A {
+	init(msg) {
+		this.msg = msg;
+	}
+	greet() {
+		var m="hello ";
+		print m + this.msg;
+	}
+}
+
+class B < A {
+	init(name,msg) {
+		var message = name+ ",  " + msg;
+		super.init(message) ;
+	}
+}
+
+var b = B("linus","How are you?");
+b.greet();
+
+
