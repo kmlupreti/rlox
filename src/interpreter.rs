@@ -36,6 +36,7 @@ pub struct Interpreter {
     current_function_type: FunctionType,
     current_class_type: ClassType,
     current_super_class: Option<Token>,
+    is_inside_loop: bool,
 }
 impl Interpreter {
     pub fn new() -> Self {
@@ -104,7 +105,11 @@ impl Interpreter {
 
             Stmt::While { condition, body } => {
                 while self.evaluate(condition.clone())?.is_true() {
-                    self.execute_stmt(*body.clone())?;
+                    match self.execute_stmt(*body.clone()) {
+                        Ok(_) => continue,
+                        Err(LoxError::Break { line: _ }) => break,
+                        other_error => return other_error,
+                    }
                 }
             }
             Stmt::Func { name, params, body } => {
@@ -173,6 +178,7 @@ impl Interpreter {
                     value: Box::new(value),
                 });
             }
+            Stmt::Break { keyword } => return Err(LoxError::Break { line: keyword.line }),
         }
 
         Ok(())
@@ -572,8 +578,11 @@ impl Interpreter {
                 }
             }
             Stmt::While { condition, body } => {
+                let is_inside_loop = self.is_inside_loop;
+                self.is_inside_loop = true;
                 self.resolve_expr(condition)?;
                 self.resolve_stmt(*body)?;
+                self.is_inside_loop = is_inside_loop;
             }
             Stmt::Func { name, params, body } => {
                 self.resolve_function(name, body, params, FunctionType::Function)?;
@@ -647,6 +656,11 @@ impl Interpreter {
                     });
                 }
             },
+            Stmt::Break { keyword } => {
+                if !self.is_inside_loop {
+                    return Err(LoxError::Break { line: keyword.line });
+                }
+            }
         }
         Ok(())
     }

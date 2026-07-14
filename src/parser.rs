@@ -156,11 +156,23 @@ impl Parser {
             self.for_stmt()
         } else if self.check(TokenType::Return) {
             self.return_stmt()
+        } else if self.check(TokenType::Break) {
+            self.break_stmt()
         } else {
             self.expr_stmt()
         }
     }
 
+    fn break_stmt(&mut self) -> LoxResult<Stmt> {
+        let stmt = Ok(Stmt::Break {
+            keyword: self.advance().clone(),
+        });
+        self.consume(
+            TokenType::Semicolon,
+            String::from("expected ';' after break statement"),
+        )?;
+        stmt
+    }
     fn return_stmt(&mut self) -> LoxResult<Stmt> {
         self.advance();
         let value = if !self.check(TokenType::Semicolon) {

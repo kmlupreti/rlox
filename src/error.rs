@@ -11,6 +11,7 @@ pub enum LoxError {
     RuntimeError { line: usize, msg: String },
     CallError { msg: String, line: usize },
     Return { line: usize, value: Box<LoxValue> },
+    Break { line: usize },
     ResolveError { line: usize, msg: String },
     GetError { msg: String, line: usize },
 }
@@ -48,6 +49,9 @@ impl Display for LoxError {
                     "[line: {}] can't use return outside the function block",
                     line
                 )
+            }
+            LoxError::Break { line } => {
+                write!(f, "[line: {}] can't use break outside loop", line)
             }
             _ => write!(f, "unknown error occured"),
         }

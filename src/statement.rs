@@ -38,4 +38,7 @@ pub enum Stmt {
         keyword: Token,
         value: Option<Expr>,
     },
+    Break {
+        keyword: Token,
+    },
 }
