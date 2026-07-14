@@ -1,3 +1,4 @@
+use crate::error::LoxResult;
 use crate::interpreter::Interpreter;
 use crate::parser::Parser;
 use std::io::{self, BufRead, BufReader, Read, Write};
@@ -19,7 +20,7 @@ pub mod statement;
 pub mod token;
 pub mod token_type;
 
-pub fn run_file<P>(path: P) -> io::Result<()>
+pub fn run_file<P>(path: P) -> LoxResult<()>
 where
     P: AsRef<Path>,
 {
@@ -27,20 +28,10 @@ where
     let mut reader = BufReader::new(file);
     let mut buffer = String::new();
     reader.read_to_string(&mut buffer)?;
-    let mut scanner = scanner::Scanner::new(&buffer);
-    let tokens = match scanner.scan_tokens() {
-        Ok(t) => t,
-        Err(_) => exit(65),
-    };
-    let mut parser = Parser::new(tokens.clone());
-    let statements = parser.parse();
-    if let Err(e) = Interpreter::new().interpret(statements) {
-        eprintln!("{e}");
-        exit(70);
-    }
-    Ok(())
+    Interpreter::new()
+        .interpret(Parser::new(scanner::Scanner::new(&buffer).scan_tokens()?.clone()).parse())
 }
-pub fn run_prompt() -> io::Result<()> {
+pub fn run_prompt() -> LoxResult<()> {
     let mut stdin = io::stdin().lock();
     let mut interpreter = Interpreter::new();
     loop {
@@ -52,15 +43,11 @@ pub fn run_prompt() -> io::Result<()> {
             break;
         }
         let mut scanner = scanner::Scanner::new(&line);
-        let tokens = match scanner.scan_tokens() {
-            Ok(t) => t,
-            Err(_) => continue,
-        };
-        let mut parser = Parser::new(tokens.clone());
-        let statements = parser.parse();
-        if let Err(e) = interpreter.interpret(statements) {
+        if let Ok(tokens) = scanner.scan_tokens()
+            && let Err(e) = interpreter.interpret(Parser::new(tokens.clone()).parse())
+        {
             eprintln!("{e}");
-        }
+        };
     }
     Ok(())
 }
