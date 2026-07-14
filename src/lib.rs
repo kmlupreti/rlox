@@ -1,7 +1,7 @@
 use crate::error::LoxResult;
 use crate::interpreter::Interpreter;
 use crate::parser::Parser;
-use std::io::{self, BufRead, BufReader, Read, Write};
+use std::io::{self, BufReader, Read, Write};
 use std::{fs::File, path::Path};
 
 pub mod builtin_functions;
@@ -32,7 +32,7 @@ where
         .interpret(Parser::new(scanner::Scanner::new(&buffer).scan_tokens()?.clone()).parse())
 }
 pub fn run_prompt() -> LoxResult<()> {
-    let mut stdin = io::stdin().lock();
+    let stdin = io::stdin();
     let mut interpreter = Interpreter::new();
     loop {
         print!("> ");
