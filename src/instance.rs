@@ -16,17 +16,21 @@ impl Instance {
         if let Some(v) = self.fields.get(&name.lexeme) {
             Ok(v.clone())
         } else {
-            match self.class.get_method(&name.lexeme) {
-                Some(method) => {
-                    let mut method = method.clone();
-                    method.bind(instance);
-                    Ok(LoxValue::Function(method))
-                }
-                None => Err(LoxError::GetError {
+            let mut method = if let Some(class_method) = self.class.get_method(&name.lexeme) {
+                class_method.clone()
+            } else if let Some(super_class) = &self.class.super_class
+                && let Some(super_class_method) = super_class.get_method(&name.lexeme)
+            {
+                super_class_method.clone()
+            } else {
+                return Err(LoxError::GetError {
                     msg: format!("undefined property or method '{}'", name.lexeme),
                     line: name.line,
-                }),
-            }
+                });
+            };
+
+            method.bind(instance);
+            Ok(LoxValue::Function(method))
         }
     }
 }

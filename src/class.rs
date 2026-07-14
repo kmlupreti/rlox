@@ -10,6 +10,7 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 pub struct Class {
     pub name: String,
     pub methods: HashMap<String, Function>,
+    pub super_class: Option<Box<Class>>,
 }
 
 impl Class {

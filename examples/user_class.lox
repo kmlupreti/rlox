@@ -1,5 +1,5 @@
 class User {
-	init(id,name) {
+	init(name,id) {
 		this.id =id;
 		this.name = name;
 	}

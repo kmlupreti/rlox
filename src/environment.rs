@@ -25,19 +25,19 @@ impl Environment {
     pub fn define(&mut self, name: String, value: LoxValue) {
         self.values.insert(name, value);
     }
-    pub fn get_at(&self, name: Token, distance: usize) -> LoxValueResult {
+    pub fn get_at(&self, name: &str, line: usize, distance: usize) -> LoxValueResult {
         if distance == 0
-            && let Some(v) = self.values.get(&name.lexeme)
+            && let Some(v) = self.values.get(name)
         {
             Ok(v.clone())
         } else if let Some(env) = self.ancestor(distance)
-            && let Some(v) = env.borrow().values.get(&name.lexeme)
+            && let Some(v) = env.borrow().values.get(name)
         {
             Ok(v.clone())
         } else {
             Err(LoxError::RuntimeError {
-                line: name.line,
-                msg: format!("undeclared identifier '{}' found", name.lexeme),
+                line,
+                msg: format!("undeclared identifier '{}' found", name),
             })
         }
     }

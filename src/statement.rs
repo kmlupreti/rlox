@@ -32,6 +32,7 @@ pub enum Stmt {
     ClassStmt {
         name: Token,
         methods: Vec<Stmt>,
+        super_class: Option<Expr>,
     },
     ReturnStmt {
         keyword: Token,

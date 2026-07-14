@@ -20,9 +20,10 @@ enum FunctionType {
     #[default]
     None,
 }
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug, Clone, Copy)]
 enum ClassType {
     Class,
+    SubClasss,
     #[default]
     None,
 }
@@ -34,6 +35,7 @@ pub struct Interpreter {
     scopes: Vec<HashMap<String, bool>>,
     current_function_type: FunctionType,
     current_class_type: ClassType,
+    current_super_class: Option<Token>,
 }
 impl Interpreter {
     pub fn new() -> Self {
@@ -116,7 +118,28 @@ impl Interpreter {
                     }),
                 );
             }
-            Stmt::ClassStmt { name, methods } => {
+            Stmt::ClassStmt {
+                name,
+                methods,
+                super_class,
+            } => {
+                let mut super_class_value = None;
+                if let Some(super_class_expr) = super_class {
+                    if let Ok(LoxValue::Class(super_class)) =
+                        self.evaluate(super_class_expr.clone())
+                    {
+                        super_class_value = Some(Box::new(super_class));
+                        if let Expr::Identifier { name, id: _ } = super_class_expr {
+                            self.current_super_class =
+                                Some(Token::new(TokenType::Class, name.lexeme, name.line));
+                        }
+                    } else {
+                        return Err(LoxError::RuntimeError {
+                            line: name.line,
+                            msg: String::from("super class must be a class"),
+                        });
+                    }
+                }
                 let mut methods_map = HashMap::new();
                 for method in methods {
                     if let Stmt::FuncStmt { name, params, body } = method {
@@ -136,6 +159,7 @@ impl Interpreter {
                     LoxValue::Class(crate::class::Class {
                         name: name.lexeme,
                         methods: methods_map,
+                        super_class: super_class_value,
                     }),
                 );
             }
@@ -480,13 +504,40 @@ impl Interpreter {
                 }
             }
             Expr::This { keyword, id } => self.lookup(keyword, id),
+            Expr::Super {
+                keyword,
+                id,
+                method,
+            } => {
+                if let Some(super_class) = self.current_super_class.clone()
+                    && let LoxValue::Class(super_class) = self.lookup(super_class, id)?
+                    && let Some(super_class_method) = super_class.get_method(&method.lexeme)
+                {
+                    let mut method = super_class_method.clone();
+                    method.bind(self.current_environment.borrow().get_at(
+                        "this",
+                        keyword.line,
+                        1,
+                    )?);
+                    Ok(LoxValue::Function(method))
+                } else {
+                    Err(LoxError::GetError {
+                        msg: String::from("super class not found"),
+                        line: keyword.line,
+                    })
+                }
+            }
         }
     }
 
     pub fn lookup(&self, name: Token, id: usize) -> LoxValueResult {
         match self.locals.get(&id) {
-            Some(distance) => self.current_environment.borrow().get_at(name, *distance),
-            None => self.globals.borrow().get_at(name, 0),
+            Some(distance) => {
+                self.current_environment
+                    .borrow()
+                    .get_at(&name.lexeme, name.line, *distance)
+            }
+            None => self.globals.borrow().get_at(&name.lexeme, name.line, 0),
         }
     }
     pub fn resolve_stmt(&mut self, stmt: Stmt) -> LoxResult<()> {
@@ -527,11 +578,37 @@ impl Interpreter {
             Stmt::FuncStmt { name, params, body } => {
                 self.resolve_function(name, body, params, FunctionType::Function)?;
             }
-            Stmt::ClassStmt { name, methods } => {
+            Stmt::ClassStmt {
+                name,
+                methods,
+                super_class,
+            } => {
                 self.declare(name.clone())?;
-                self.define(name);
-                let current_class_type = self.current_class_type.clone();
+                self.define(name.clone());
+                let current_class_type = self.current_class_type;
+                let current_super_class = self.current_super_class.clone();
                 self.current_class_type = ClassType::Class;
+
+                if let Some(super_class_expr) = super_class {
+                    self.current_class_type = ClassType::SubClasss;
+                    if let Expr::Identifier {
+                        name: super_class_name,
+                        id: _,
+                    } = super_class_expr.clone()
+                    {
+                        if name == super_class_name {
+                            return Err(LoxError::RuntimeError {
+                                line: name.line,
+                                msg: String::from("A class can't inherit from itself"),
+                            });
+                        } else {
+                            self.resolve_expr(super_class_expr)?;
+                            self.current_super_class = Some(super_class_name);
+                        }
+                    } else {
+                        self.resolve_expr(super_class_expr)?;
+                    }
+                }
                 self.begin_scope();
                 self.scopes
                     .last_mut()
@@ -548,6 +625,7 @@ impl Interpreter {
                     }
                 }
                 self.end_scope();
+                self.current_super_class = current_super_class;
                 self.current_class_type = current_class_type;
             }
             Stmt::ReturnStmt { keyword, value } => match self.current_function_type {
@@ -659,11 +737,28 @@ impl Interpreter {
                 self.resolve_expr(*object)?;
             }
             Expr::This { keyword, id } => match self.current_class_type {
-                ClassType::Class => self.resolve_local(id, keyword),
                 ClassType::None => {
                     return Err(LoxError::ResolveError {
                         line: keyword.line,
                         msg: String::from("can't use this keyword outside class"),
+                    });
+                }
+                _ => self.resolve_local(id, keyword),
+            },
+            Expr::Super {
+                keyword,
+                method: _,
+                id,
+            } => match self.current_class_type {
+                ClassType::SubClasss => {
+                    if let Some(super_class) = self.current_super_class.clone() {
+                        self.resolve_local(id, super_class)
+                    }
+                }
+                _ => {
+                    return Err(LoxError::ResolveError {
+                        line: keyword.line,
+                        msg: String::from("can't use super keyword outside sub class"),
                     });
                 }
             },

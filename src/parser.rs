@@ -63,7 +63,15 @@ impl Parser {
 
     fn class_declaration(&mut self) -> LoxResult<Stmt> {
         self.advance();
+        let mut super_class = None;
         let name = self.consume(TokenType::Identifier, String::from("expected class name"))?;
+        if self.check(TokenType::Less) {
+            self.advance();
+            super_class = Some(Expr::Identifier {
+                name: self.advance().clone(),
+                id: self.next_node_id(),
+            });
+        }
         self.consume(
             TokenType::LeftBrace,
             String::from("expected '{'  after class name"),
@@ -76,7 +84,11 @@ impl Parser {
             TokenType::Rightbrace,
             String::from("expected '}'  at the end of class block"),
         )?;
-        Ok(Stmt::ClassStmt { name, methods })
+        Ok(Stmt::ClassStmt {
+            name,
+            methods,
+            super_class,
+        })
     }
     fn func_declaration(&mut self, kind: &str) -> LoxResult<Stmt> {
         let name = self.consume(TokenType::Identifier, format!("expect {} name", kind))?;
@@ -466,6 +478,22 @@ impl Parser {
                 keyword: self.advance().clone(),
                 id: self.next_node_id(),
             }),
+            TokenType::Super => {
+                let keyword = self.advance().clone();
+                self.consume(
+                    TokenType::Dot,
+                    String::from("expected '.' after super keyword"),
+                )?;
+                let method = self.consume(
+                    TokenType::Identifier,
+                    String::from("expected super class method after '.' "),
+                )?;
+                Ok(Expr::Super {
+                    keyword,
+                    id: self.next_node_id(),
+                    method,
+                })
+            }
             TokenType::LeftParen => {
                 self.advance();
                 let expr = Box::new(self.expression()?);

@@ -49,4 +49,9 @@ pub enum Expr {
         keyword: Token,
         id: usize,
     },
+    Super {
+        keyword: Token,
+        method: Token,
+        id: usize,
+    },
 }
