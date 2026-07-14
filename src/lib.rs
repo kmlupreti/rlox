@@ -2,7 +2,7 @@ use crate::error::LoxResult;
 use crate::interpreter::Interpreter;
 use crate::parser::Parser;
 use std::io::{self, BufRead, BufReader, Read, Write};
-use std::{fs::File, path::Path, process::exit};
+use std::{fs::File, path::Path};
 
 pub mod builtin_functions;
 pub mod callable;
