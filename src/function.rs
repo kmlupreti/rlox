@@ -46,7 +46,11 @@ impl Callable for Function {
         interpreter.current_environment = function_env;
         let mut return_value = Ok(LoxValue::Null);
         if self.closure.is_none() {
-            return_value = run_builtin_function(self, line)
+            return_value = run_builtin_function(
+                self,
+                interpreter.current_environment.borrow().values.clone(),
+                line,
+            )
         } else {
             if let Err(LoxError::Return { line: _, value }) = interpreter.execute(self.body.clone())
             {
