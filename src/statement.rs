@@ -2,39 +2,39 @@ use crate::{expresssion::Expr, token::Token};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Stmt {
-    ExprStmt {
+    Expr {
         expr: Expr,
     },
-    PrintStmt {
+    Print {
         expr: Expr,
     },
-    VarDeclStmt {
+    VarDecl {
         name: Token,
         initializer: Expr,
     },
-    BlockStmt {
+    Block {
         statements: Vec<Stmt>,
     },
-    IfStmt {
+    If {
         condition: Expr,
         then_branch: Box<Stmt>,
         else_branch: Option<Box<Stmt>>,
     },
-    WhileStmt {
+    While {
         condition: Expr,
         body: Box<Stmt>,
     },
-    FuncStmt {
+    Func {
         name: Token,
         params: Vec<Token>,
         body: Vec<Stmt>,
     },
-    ClassStmt {
+    Class {
         name: Token,
         methods: Vec<Stmt>,
         super_class: Option<Expr>,
     },
-    ReturnStmt {
+    Return {
         keyword: Token,
         value: Option<Expr>,
     },

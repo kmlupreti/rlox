@@ -48,7 +48,7 @@ impl Parser {
             Err(e) => {
                 eprintln!("{}", e);
                 self.sync();
-                Stmt::ExprStmt {
+                Stmt::Expr {
                     expr: Expr::Literal {
                         value: Token {
                             token_type: TokenType::Nil,
@@ -84,7 +84,7 @@ impl Parser {
             TokenType::Rightbrace,
             String::from("expected '}'  at the end of class block"),
         )?;
-        Ok(Stmt::ClassStmt {
+        Ok(Stmt::Class {
             name,
             methods,
             super_class,
@@ -106,10 +106,10 @@ impl Parser {
         )?;
 
         let body = match self.statement()? {
-            Stmt::BlockStmt { statements } => statements,
+            Stmt::Block { statements } => statements,
             stmt => vec![stmt],
         };
-        Ok(Stmt::FuncStmt { name, params, body })
+        Ok(Stmt::Func { name, params, body })
     }
     fn parameters(&mut self) -> LoxResult<Vec<Token>> {
         let mut params = vec![];
@@ -141,7 +141,7 @@ impl Parser {
             TokenType::Semicolon,
             String::from("expected ';' after value"),
         )?;
-        Ok(Stmt::VarDeclStmt { name, initializer })
+        Ok(Stmt::VarDecl { name, initializer })
     }
     fn statement(&mut self) -> LoxResult<Stmt> {
         if self.check(TokenType::Print) {
@@ -172,7 +172,7 @@ impl Parser {
             TokenType::Semicolon,
             String::from("expected ';' after value"),
         )?;
-        Ok(Stmt::ReturnStmt {
+        Ok(Stmt::Return {
             keyword: self.peek().clone(),
             value,
         })
@@ -212,22 +212,22 @@ impl Parser {
         self.consume(TokenType::RightParen, String::from("missing ')'"))?;
         let mut body = self.statement()?;
         if let Some(increment) = increment {
-            if let Stmt::BlockStmt { mut statements } = body {
-                let increment = Stmt::ExprStmt { expr: increment };
+            if let Stmt::Block { mut statements } = body {
+                let increment = Stmt::Expr { expr: increment };
                 statements.push(increment);
-                body = Stmt::BlockStmt { statements };
+                body = Stmt::Block { statements };
             } else {
-                body = Stmt::BlockStmt {
-                    statements: vec![body, Stmt::ExprStmt { expr: increment }],
+                body = Stmt::Block {
+                    statements: vec![body, Stmt::Expr { expr: increment }],
                 };
             }
         }
-        let while_stmt = Stmt::WhileStmt {
+        let while_stmt = Stmt::While {
             condition,
             body: Box::new(body),
         };
         if let Some(initializer) = initializer {
-            Ok(Stmt::BlockStmt {
+            Ok(Stmt::Block {
                 statements: vec![initializer, while_stmt],
             })
         } else {
@@ -240,7 +240,7 @@ impl Parser {
         let condition = self.expression()?;
         self.consume(TokenType::RightParen, String::from("missing ')'"))?;
         let body = Box::new(self.statement()?);
-        Ok(Stmt::WhileStmt { condition, body })
+        Ok(Stmt::While { condition, body })
     }
     fn if_stmt(&mut self) -> LoxResult<Stmt> {
         self.advance();
@@ -253,7 +253,7 @@ impl Parser {
             self.advance();
             else_branch = Some(Box::new(self.statement()?));
         }
-        Ok(Stmt::IfStmt {
+        Ok(Stmt::If {
             condition,
             then_branch,
             else_branch,
@@ -266,7 +266,7 @@ impl Parser {
             TokenType::Semicolon,
             String::from("expected ';' after value"),
         )?;
-        Ok(Stmt::PrintStmt { expr })
+        Ok(Stmt::Print { expr })
     }
     fn expr_stmt(&mut self) -> LoxResult<Stmt> {
         let expr = self.expression()?;
@@ -274,7 +274,7 @@ impl Parser {
             TokenType::Semicolon,
             String::from("expected ';' after value"),
         )?;
-        Ok(Stmt::ExprStmt { expr })
+        Ok(Stmt::Expr { expr })
     }
     fn block_stmt(&mut self) -> LoxResult<Stmt> {
         self.advance();
@@ -286,7 +286,7 @@ impl Parser {
             TokenType::Rightbrace,
             String::from("block is not closed as closing brace '}' is missing"),
         )?;
-        Ok(Stmt::BlockStmt { statements })
+        Ok(Stmt::Block { statements })
     }
     fn expression(&mut self) -> LoxResult<Expr> {
         self.assignment()

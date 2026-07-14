@@ -62,20 +62,20 @@ impl Interpreter {
     }
     pub fn execute_stmt(&mut self, statement: Stmt) -> LoxResult<()> {
         match statement {
-            Stmt::ExprStmt { expr } => {
+            Stmt::Expr { expr } => {
                 self.evaluate(expr)?;
             }
-            Stmt::PrintStmt { expr } => {
+            Stmt::Print { expr } => {
                 let expr_out = self.evaluate(expr)?;
                 println!("{expr_out}");
             }
-            Stmt::VarDeclStmt { name, initializer } => {
+            Stmt::VarDecl { name, initializer } => {
                 let value = self.evaluate(initializer)?;
                 self.current_environment
                     .borrow_mut()
                     .define(name.lexeme, value);
             }
-            Stmt::BlockStmt { statements } => {
+            Stmt::Block { statements } => {
                 let previous_env = self.current_environment.clone();
                 let block_env = Environment::new_enclosing(previous_env.clone());
                 self.current_environment = block_env;
@@ -89,7 +89,7 @@ impl Interpreter {
                 self.current_environment = previous_env;
                 result?
             }
-            Stmt::IfStmt {
+            Stmt::If {
                 condition,
                 then_branch,
                 else_branch,
@@ -102,12 +102,12 @@ impl Interpreter {
                 }
             }
 
-            Stmt::WhileStmt { condition, body } => {
+            Stmt::While { condition, body } => {
                 while self.evaluate(condition.clone())?.is_true() {
                     self.execute_stmt(*body.clone())?;
                 }
             }
-            Stmt::FuncStmt { name, params, body } => {
+            Stmt::Func { name, params, body } => {
                 self.current_environment.borrow_mut().define(
                     name.lexeme.clone(),
                     LoxValue::Function(Function {
@@ -118,7 +118,7 @@ impl Interpreter {
                     }),
                 );
             }
-            Stmt::ClassStmt {
+            Stmt::Class {
                 name,
                 methods,
                 super_class,
@@ -142,7 +142,7 @@ impl Interpreter {
                 }
                 let mut methods_map = HashMap::new();
                 for method in methods {
-                    if let Stmt::FuncStmt { name, params, body } = method {
+                    if let Stmt::Func { name, params, body } = method {
                         methods_map.insert(
                             name.lexeme.clone(),
                             Function {
@@ -163,7 +163,7 @@ impl Interpreter {
                     }),
                 );
             }
-            Stmt::ReturnStmt { keyword, value } => {
+            Stmt::Return { keyword, value } => {
                 let value = match value {
                     Some(expr) => self.evaluate(expr)?,
                     None => LoxValue::Null,
@@ -542,25 +542,25 @@ impl Interpreter {
     }
     pub fn resolve_stmt(&mut self, stmt: Stmt) -> LoxResult<()> {
         match stmt {
-            Stmt::ExprStmt { expr } => {
+            Stmt::Expr { expr } => {
                 self.resolve_expr(expr)?;
             }
-            Stmt::PrintStmt { expr } => {
+            Stmt::Print { expr } => {
                 self.resolve_expr(expr)?;
             }
-            Stmt::VarDeclStmt { name, initializer } => {
+            Stmt::VarDecl { name, initializer } => {
                 self.declare(name.clone())?;
                 self.resolve_expr(initializer)?;
                 self.define(name);
             }
-            Stmt::BlockStmt { statements } => {
+            Stmt::Block { statements } => {
                 self.begin_scope();
                 for statement in statements {
                     self.resolve_stmt(statement)?
                 }
                 self.end_scope();
             }
-            Stmt::IfStmt {
+            Stmt::If {
                 condition,
                 then_branch,
                 else_branch,
@@ -571,14 +571,14 @@ impl Interpreter {
                     self.resolve_stmt(*stmt)?;
                 }
             }
-            Stmt::WhileStmt { condition, body } => {
+            Stmt::While { condition, body } => {
                 self.resolve_expr(condition)?;
                 self.resolve_stmt(*body)?;
             }
-            Stmt::FuncStmt { name, params, body } => {
+            Stmt::Func { name, params, body } => {
                 self.resolve_function(name, body, params, FunctionType::Function)?;
             }
-            Stmt::ClassStmt {
+            Stmt::Class {
                 name,
                 methods,
                 super_class,
@@ -615,7 +615,7 @@ impl Interpreter {
                     .unwrap()
                     .insert(String::from("this"), true);
                 for method in methods {
-                    if let Stmt::FuncStmt { name, params, body } = method {
+                    if let Stmt::Func { name, params, body } = method {
                         let function_type = if name.lexeme.as_str() == "init" {
                             FunctionType::Initializer
                         } else {
@@ -628,7 +628,7 @@ impl Interpreter {
                 self.current_super_class = current_super_class;
                 self.current_class_type = current_class_type;
             }
-            Stmt::ReturnStmt { keyword, value } => match self.current_function_type {
+            Stmt::Return { keyword, value } => match self.current_function_type {
                 FunctionType::Function | FunctionType::Method => {
                     if let Some(value) = value {
                         self.resolve_expr(value)?;
