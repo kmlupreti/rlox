@@ -57,7 +57,6 @@ impl Environment {
             && env.borrow().values.contains_key(&name.lexeme)
         {
             env.borrow_mut().values.insert(name.lexeme, value.clone());
-            println!("value: {}", value);
             Ok(value)
         } else {
             Err(LoxError::RuntimeError {

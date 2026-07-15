@@ -15,7 +15,13 @@ pub struct Class {
 
 impl Class {
     pub fn get_method(&self, name: &str) -> Option<&Function> {
-        self.methods.get(name)
+        let mut method = self.methods.get(name);
+        if method.is_none()
+            && let Some(super_class) = &self.super_class
+        {
+            method = super_class.get_method(name)
+        }
+        method
     }
 }
 

@@ -20,7 +20,7 @@ impl Display for LoxValue {
             LoxValue::Number(n) => write!(f, "{n}"),
             LoxValue::String(s) => write!(f, "{s}"),
             LoxValue::Boolean(b) => write!(f, "{b}"),
-            LoxValue::Class(class) => write!(f, "class: {}", class.name),
+            LoxValue::Class(class) => write!(f, "{}", class.name),
             LoxValue::Instance(instance) => {
                 write!(f, "instance of class: {}", instance.borrow().class.name)
             }
