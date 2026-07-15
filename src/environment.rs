@@ -51,11 +51,13 @@ impl Environment {
     }
     pub fn assign_at(&mut self, name: Token, value: LoxValue, distance: usize) -> LoxValueResult {
         if distance == 0 && self.values.contains_key(&name.lexeme) {
-            Ok(self.values.insert(name.lexeme, value).unwrap())
+            self.values.insert(name.lexeme, value.clone()).unwrap();
+            Ok(value)
         } else if let Some(env) = self.ancestor(distance)
             && env.borrow().values.contains_key(&name.lexeme)
         {
             env.borrow_mut().values.insert(name.lexeme, value.clone());
+            println!("value: {}", value);
             Ok(value)
         } else {
             Err(LoxError::RuntimeError {
