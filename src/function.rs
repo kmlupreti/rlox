@@ -55,6 +55,12 @@ impl Callable for Function {
             if let Err(LoxError::Return { line: _, value }) = interpreter.execute(self.body.clone())
             {
                 return_value = Ok(*value);
+            };
+            if self.name == "init" {
+                return_value = Ok(interpreter
+                    .current_environment
+                    .borrow()
+                    .get_at("this", 1, 0)?);
             }
         }
         interpreter.current_environment = previous_env;
