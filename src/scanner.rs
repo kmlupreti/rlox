@@ -191,7 +191,7 @@ impl Scanner {
             '/' => {
                 if self.match_char('/') {
                     // skip single line comment
-                    while self.current_char() != '\n' {
+                    while !self.is_at_end() && self.current_char() != '\n' {
                         self.current_index += 1
                     }
                 } else {
