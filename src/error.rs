@@ -3,6 +3,7 @@ use std::{fmt::Display, io::Error};
 
 pub type LoxResult<T> = Result<T, LoxError>;
 
+#[derive(Debug)]
 pub enum LoxError {
     ScanError,
     UnexpectedChar { char: char, line: usize },
