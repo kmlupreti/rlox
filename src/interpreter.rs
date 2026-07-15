@@ -485,7 +485,7 @@ impl Interpreter {
                     instance.borrow().get(&name, expr_value)
                 } else {
                     Err(LoxError::GetError {
-                        msg: format!("'{}' is not an instance of a class", name.lexeme),
+                        msg: format!("'{}' is not an instance of a class", expr_value),
                         line: name.line,
                     })
                 }
