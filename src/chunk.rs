@@ -5,12 +5,15 @@ type Value = u64;
 
 #[derive(Default)]
 pub struct Chunk {
-    pub code: Vec<Opcode>,
+    pub code: Vec<u8>,
     constants: Vec<Value>,
 }
 impl Chunk {
     pub fn new() -> Self {
         Self::default()
+    }
+    pub fn write(&mut self, byte: u8) {
+        self.code.push(byte);
     }
     pub fn add_constant(&mut self, constant: Value) {
         self.constants.push(constant);
@@ -24,9 +27,9 @@ impl Chunk {
     }
     fn disassemble_instruction(&self, offset: usize) -> usize {
         print!("{:04} ", offset);
-        let instruction = &self.code[offset];
+        let instruction = Opcode::from(self.code[offset]);
         match instruction {
-            Opcode::OpReturn => self.simple_instruction(instruction, offset),
+            Opcode::OpReturn => self.simple_instruction(&instruction, offset),
             _ => {
                 println!("unknown instruction: {:?}", instruction);
                 offset + 1
