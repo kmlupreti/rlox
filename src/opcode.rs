@@ -92,3 +92,47 @@ pub enum Opcode {
     //> Methods and Initializers method-op
     OpMethod, //< Methods and Initializers method-op}
 }
+impl From<u8> for Opcode {
+    fn from(value: u8) -> Self {
+        match value {
+            0 => Self::OpConstant,
+            1 => Self::OpNil,
+            2 => Self::OpTrue,
+            3 => Self::OpFalse,
+            4 => Self::OpPop,
+            5 => Self::OpGetLocal,
+            6 => Self::OpSetLocal,
+            7 => Self::OpGetGlobal,
+            8 => Self::OpDefineGlobal,
+            9 => Self::OpSetGlobal,
+            10 => Self::OpGetUpvalue,
+            11 => Self::OpSetUpvalue,
+            12 => Self::OpGetProperty,
+            13 => Self::OpSetProperty,
+            14 => Self::OpGetSuper,
+            15 => Self::OpEqual,
+            16 => Self::OpGreater,
+            17 => Self::OpLess,
+            18 => Self::OpAdd,
+            19 => Self::OpSubtract,
+            20 => Self::OpMultiply,
+            21 => Self::OpDivide,
+            22 => Self::OpNot,
+            23 => Self::OpNegate,
+            24 => Self::OpPrint,
+            25 => Self::OpJump,
+            26 => Self::OpJumpIfFalse,
+            27 => Self::OpLoop,
+            28 => Self::OpCall,
+            29 => Self::OpInvoke,
+            30 => Self::OpSuperInvoke,
+            31 => Self::OpClosure,
+            32 => Self::OpCloseUpValue,
+            33 => Self::OpReturn,
+            34 => Self::OpClass,
+            35 => Self::OpInherit,
+            36 => Self::OpMethod,
+            _ => panic!("Unknown raw opcode value: {}", value),
+        }
+    }
+}
