@@ -431,13 +431,14 @@ impl Interpreter {
                 match operator.token_type {
                     TokenType::Or => {
                         if left.is_true() {
-                            Ok(LoxValue::Boolean(true))
+                            Ok(left)
+                        } else if let Some(right) = right
+                            && let right = self.evaluate(*right)?
+                            && right.is_true()
+                        {
+                            Ok(right)
                         } else {
-                            if let Some(right) = right {
-                                Ok(LoxValue::Boolean(self.evaluate(*right)?.is_true()))
-                            } else {
-                                Ok(LoxValue::Boolean(false))
-                            }
+                            Ok(LoxValue::Boolean(false))
                         }
                     }
                     TokenType::And => {
