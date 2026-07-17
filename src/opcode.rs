@@ -136,3 +136,9 @@ impl From<u8> for Opcode {
         }
     }
 }
+
+impl From<Opcode> for u8 {
+    fn from(value: Opcode) -> Self {
+        value as u8
+    }
+}
