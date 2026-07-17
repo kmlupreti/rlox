@@ -88,16 +88,32 @@ impl VM {
                     todo!()
                 }
                 Opcode::OpAdd => {
-                    todo!()
+                    if let Some(b) = self.stack.pop()
+                        && let Some(a) = self.stack.pop()
+                    {
+                        self.stack.push(a + b);
+                    }
                 }
                 Opcode::OpSubtract => {
-                    todo!()
+                    if let Some(b) = self.stack.pop()
+                        && let Some(a) = self.stack.pop()
+                    {
+                        self.stack.push(a - b);
+                    }
                 }
                 Opcode::OpMultiply => {
-                    todo!()
+                    if let Some(b) = self.stack.pop()
+                        && let Some(a) = self.stack.pop()
+                    {
+                        self.stack.push(a * b);
+                    }
                 }
                 Opcode::OpDivide => {
-                    todo!()
+                    if let Some(b) = self.stack.pop()
+                        && let Some(a) = self.stack.pop()
+                    {
+                        self.stack.push(a / b);
+                    }
                 }
                 Opcode::OpNot => {
                     todo!()
