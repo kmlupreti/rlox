@@ -1,6 +1,11 @@
-use crate::opcode::Opcode;
+use crate::{
+    error::{LoxError, LoxResult},
+    opcode::Opcode,
+};
 
 pub type Value = i64;
+pub type ByteResult = LoxResult<u8>;
+pub type ValueResult = LoxResult<Value>;
 
 #[derive(Default)]
 pub struct Chunk {
@@ -19,47 +24,56 @@ impl Chunk {
         self.bytecodes.push(byte.into());
         self.lines.push(line);
     }
-    pub fn read_byte(&self, byte_index: usize) -> u8 {
-        self.bytecodes[byte_index]
+    pub fn read_byte(&self, byte_index: usize) -> ByteResult {
+        if self.bytecodes.is_empty() {
+            Err(LoxError::VMError {
+                msg: String::from("no bytecode in the chunk"),
+            })
+        } else {
+            Ok(self.bytecodes[byte_index])
+        }
     }
     pub fn add_constant(&mut self, constant: Value) {
         self.constants.push(constant);
     }
-    pub fn read_constant(&self, constant_index: usize) -> Value {
-        self.constants[constant_index]
+    pub fn read_constant(&self, constant_index: usize) -> ValueResult {
+        if self.constants.is_empty() {
+            Err(LoxError::VMError {
+                msg: String::from("no constants in the chunk"),
+            })
+        } else {
+            Ok(self.constants[constant_index])
+        }
     }
-    pub fn disassemble(&self, name: char) {
+    pub fn disassemble(&self, name: char) -> LoxResult<()> {
         println!("== {} ==\n", name);
         let mut offset = 0;
         while offset < self.bytecodes.len() {
-            offset = self.disassemble_instruction(offset);
+            offset = self.disassemble_instruction(offset)?;
         }
+        Ok(())
     }
-    pub fn disassemble_instruction(&self, offset: usize) -> usize {
+    pub fn disassemble_instruction(&self, offset: usize) -> LoxResult<usize> {
         if offset > 0 && self.lines[offset] == self.lines[offset - 1] {
             print!("   | ");
         } else {
             print!("{:04} ", self.lines[offset]);
         }
         print!("{:04} ", offset);
-        let opcode = Opcode::from(self.bytecodes[offset]);
+        let opcode = Opcode::try_from(self.bytecodes[offset])?;
         match opcode {
-            Opcode::OpReturn => self.simple_instruction(&opcode, offset),
             Opcode::OpConstant => self.constant_instruction(&opcode, offset),
-            _ => {
-                println!("unknown instruction: {:?}", opcode);
-                offset + 1
-            }
+            _ => self.simple_instruction(&opcode, offset),
         }
     }
-    fn simple_instruction(&self, opcode: &Opcode, offset: usize) -> usize {
+    fn simple_instruction(&self, opcode: &Opcode, offset: usize) -> LoxResult<usize> {
         println!("{:?}", opcode);
-        offset + 1
+        Ok(offset + 1)
     }
-    fn constant_instruction(&self, opcode: &Opcode, offset: usize) -> usize {
-        let constant_index = self.bytecodes[offset + 1];
+    fn constant_instruction(&self, opcode: &Opcode, offset: usize) -> LoxResult<usize> {
+        let constant_index = self.read_byte(offset + 1)? as usize;
         print!("{:<16?} {:>4}", opcode, constant_index);
-        println!(" '{}'", self.constants[constant_index as usize]);
-        offset + 2
+        println!(" '{}'", self.read_constant(constant_index)?);
+        Ok(offset + 2)
     }
 }

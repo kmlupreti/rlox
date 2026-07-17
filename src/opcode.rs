@@ -1,3 +1,5 @@
+use crate::error::LoxError;
+
 #[repr(u8)]
 #[derive(Debug, Clone, Copy)]
 pub enum Opcode {
@@ -92,47 +94,50 @@ pub enum Opcode {
     //> Methods and Initializers method-op
     OpMethod, //< Methods and Initializers method-op}
 }
-impl From<u8> for Opcode {
-    fn from(value: u8) -> Self {
+impl TryFrom<u8> for Opcode {
+    type Error = LoxError;
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
-            0 => Self::OpConstant,
-            1 => Self::OpNil,
-            2 => Self::OpTrue,
-            3 => Self::OpFalse,
-            4 => Self::OpPop,
-            5 => Self::OpGetLocal,
-            6 => Self::OpSetLocal,
-            7 => Self::OpGetGlobal,
-            8 => Self::OpDefineGlobal,
-            9 => Self::OpSetGlobal,
-            10 => Self::OpGetUpvalue,
-            11 => Self::OpSetUpvalue,
-            12 => Self::OpGetProperty,
-            13 => Self::OpSetProperty,
-            14 => Self::OpGetSuper,
-            15 => Self::OpEqual,
-            16 => Self::OpGreater,
-            17 => Self::OpLess,
-            18 => Self::OpAdd,
-            19 => Self::OpSubtract,
-            20 => Self::OpMultiply,
-            21 => Self::OpDivide,
-            22 => Self::OpNot,
-            23 => Self::OpNegate,
-            24 => Self::OpPrint,
-            25 => Self::OpJump,
-            26 => Self::OpJumpIfFalse,
-            27 => Self::OpLoop,
-            28 => Self::OpCall,
-            29 => Self::OpInvoke,
-            30 => Self::OpSuperInvoke,
-            31 => Self::OpClosure,
-            32 => Self::OpCloseUpValue,
-            33 => Self::OpReturn,
-            34 => Self::OpClass,
-            35 => Self::OpInherit,
-            36 => Self::OpMethod,
-            _ => panic!("Unknown raw opcode value: {}", value),
+            0 => Ok(Self::OpConstant),
+            1 => Ok(Self::OpNil),
+            2 => Ok(Self::OpTrue),
+            3 => Ok(Self::OpFalse),
+            4 => Ok(Self::OpPop),
+            5 => Ok(Self::OpGetLocal),
+            6 => Ok(Self::OpSetLocal),
+            7 => Ok(Self::OpGetGlobal),
+            8 => Ok(Self::OpDefineGlobal),
+            9 => Ok(Self::OpSetGlobal),
+            10 => Ok(Self::OpGetUpvalue),
+            11 => Ok(Self::OpSetUpvalue),
+            12 => Ok(Self::OpGetProperty),
+            13 => Ok(Self::OpSetProperty),
+            14 => Ok(Self::OpGetSuper),
+            15 => Ok(Self::OpEqual),
+            16 => Ok(Self::OpGreater),
+            17 => Ok(Self::OpLess),
+            18 => Ok(Self::OpAdd),
+            19 => Ok(Self::OpSubtract),
+            20 => Ok(Self::OpMultiply),
+            21 => Ok(Self::OpDivide),
+            22 => Ok(Self::OpNot),
+            23 => Ok(Self::OpNegate),
+            24 => Ok(Self::OpPrint),
+            25 => Ok(Self::OpJump),
+            26 => Ok(Self::OpJumpIfFalse),
+            27 => Ok(Self::OpLoop),
+            28 => Ok(Self::OpCall),
+            29 => Ok(Self::OpInvoke),
+            30 => Ok(Self::OpSuperInvoke),
+            31 => Ok(Self::OpClosure),
+            32 => Ok(Self::OpCloseUpValue),
+            33 => Ok(Self::OpReturn),
+            34 => Ok(Self::OpClass),
+            35 => Ok(Self::OpInherit),
+            36 => Ok(Self::OpMethod),
+            _ => Err(LoxError::VMError {
+                msg: format!("uknown opcode found : {}", value),
+            }),
         }
     }
 }

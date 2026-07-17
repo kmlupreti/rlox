@@ -1,5 +1,5 @@
 use crate::{
-    chunk::{Chunk, Value},
+    chunk::{ByteResult, Chunk, Value, ValueResult},
     error::LoxResult,
     opcode::Opcode,
 };
@@ -19,21 +19,21 @@ impl VM {
         self.ip = 0;
         self.run()
     }
-    fn read_current_byte(&mut self) -> u8 {
-        let byte = self.chunk.read_byte(self.ip);
+    fn read_current_byte(&mut self) -> ByteResult {
+        let byte = self.chunk.read_byte(self.ip)?;
         self.ip += 1;
-        byte
+        Ok(byte)
     }
-    fn read_current_constant(&mut self) -> Value {
-        let constant_index = self.read_current_byte() as usize;
+    fn read_current_constant(&mut self) -> ValueResult {
+        let constant_index = self.read_current_byte()? as usize;
         self.chunk.read_constant(constant_index)
     }
     pub fn run(&mut self) -> LoxResult<()> {
         loop {
-            let instruction = Opcode::from(self.read_current_byte());
+            let instruction = Opcode::try_from(self.read_current_byte()?)?;
             match instruction {
                 Opcode::OpConstant => {
-                    let constant = self.read_current_constant();
+                    let constant = self.read_current_constant()?;
                     self.stack.push(constant);
                 }
                 Opcode::OpNil => {
