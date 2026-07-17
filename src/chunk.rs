@@ -1,7 +1,6 @@
-// #![allow(unused)]
 use crate::opcode::Opcode;
 
-type Value = u64;
+pub type Value = u64;
 
 #[derive(Default)]
 pub struct Chunk {
@@ -13,15 +12,21 @@ impl Chunk {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn write<T>(&mut self, byte: T, line: usize)
+    pub fn write_byte<T>(&mut self, byte: T, line: usize)
     where
         T: Into<u8>,
     {
         self.bytecodes.push(byte.into());
         self.lines.push(line);
     }
+    pub fn read_byte(&self, byte_index: usize) -> u8 {
+        self.bytecodes[byte_index]
+    }
     pub fn add_constant(&mut self, constant: Value) {
         self.constants.push(constant);
+    }
+    pub fn read_constant(&self, constant_index: usize) -> Value {
+        self.constants[constant_index]
     }
     pub fn disassemble(&self, name: char) {
         println!("== {} ==\n", name);
