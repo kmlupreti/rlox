@@ -30,17 +30,24 @@ impl Chunk {
     }
     fn disassemble_instruction(&self, offset: usize) -> usize {
         print!("{:04} ", offset);
-        let instruction = Opcode::from(self.code[offset]);
-        match instruction {
-            Opcode::OpReturn => self.simple_instruction(&instruction, offset),
+        let opcode = Opcode::from(self.code[offset]);
+        match opcode {
+            Opcode::OpReturn => self.simple_instruction(&opcode, offset),
+            Opcode::OpConstant => self.constant_instruction(&opcode, offset),
             _ => {
-                println!("unknown instruction: {:?}", instruction);
+                println!("unknown instruction: {:?}", opcode);
                 offset + 1
             }
         }
     }
-    fn simple_instruction(&self, instruction: &Opcode, offset: usize) -> usize {
-        println!("{:?}", instruction);
+    fn simple_instruction(&self, opcode: &Opcode, offset: usize) -> usize {
+        println!("{:?}", opcode);
         offset + 1
+    }
+    fn constant_instruction(&self, opcode: &Opcode, offset: usize) -> usize {
+        let constant_index = self.code[offset + 1];
+        print!("{:<16?} {:>4} '", opcode, constant_index);
+        println!("{}", self.constants[constant_index as usize]);
+        offset + 2
     }
 }
