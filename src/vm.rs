@@ -8,6 +8,7 @@ use crate::{
 pub struct VM {
     chunk: Chunk,
     ip: usize,
+    stack: Vec<Value>,
 }
 impl VM {
     pub fn new() -> Self {
@@ -32,7 +33,8 @@ impl VM {
             let instruction = Opcode::from(self.read_current_byte());
             match instruction {
                 Opcode::OpConstant => {
-                    println!("{}", self.read_current_constant())
+                    let constant = self.read_current_constant();
+                    self.stack.push(constant);
                 }
                 Opcode::OpNil => {
                     todo!()
@@ -101,7 +103,9 @@ impl VM {
                     todo!()
                 }
                 Opcode::OpNegate => {
-                    todo!()
+                    if let Some(value) = self.stack.pop() {
+                        self.stack.push(-value);
+                    }
                 }
                 Opcode::OpPrint => {
                     todo!()
@@ -130,7 +134,12 @@ impl VM {
                 Opcode::OpCloseUpValue => {
                     todo!()
                 }
-                Opcode::OpReturn => break,
+                Opcode::OpReturn => {
+                    if let Some(value) = self.stack.pop() {
+                        println!("{}", value);
+                    }
+                    break;
+                }
                 Opcode::OpClass => {
                     todo!()
                 }
