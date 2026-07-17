@@ -5,15 +5,18 @@ type Value = u64;
 
 #[derive(Default)]
 pub struct Chunk {
-    pub code: Vec<u8>,
+    code: Vec<u8>,
     constants: Vec<Value>,
 }
 impl Chunk {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn write(&mut self, byte: u8) {
-        self.code.push(byte);
+    pub fn write<T>(&mut self, byte: T)
+    where
+        T: Into<u8>,
+    {
+        self.code.push(byte.into());
     }
     pub fn add_constant(&mut self, constant: Value) {
         self.constants.push(constant);
