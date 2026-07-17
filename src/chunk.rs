@@ -1,6 +1,6 @@
 use crate::opcode::Opcode;
 
-pub type Value = u64;
+pub type Value = i64;
 
 #[derive(Default)]
 pub struct Chunk {
@@ -35,7 +35,7 @@ impl Chunk {
             offset = self.disassemble_instruction(offset);
         }
     }
-    fn disassemble_instruction(&self, offset: usize) -> usize {
+    pub fn disassemble_instruction(&self, offset: usize) -> usize {
         if offset > 0 && self.lines[offset] == self.lines[offset - 1] {
             print!("   | ");
         } else {
