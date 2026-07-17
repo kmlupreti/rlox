@@ -5,18 +5,20 @@ type Value = u64;
 
 #[derive(Default)]
 pub struct Chunk {
-    code: Vec<u8>,
+    bytecodes: Vec<u8>,
     constants: Vec<Value>,
+    lines: Vec<usize>,
 }
 impl Chunk {
     pub fn new() -> Self {
         Self::default()
     }
-    pub fn write<T>(&mut self, byte: T)
+    pub fn write<T>(&mut self, byte: T, line: usize)
     where
         T: Into<u8>,
     {
-        self.code.push(byte.into());
+        self.bytecodes.push(byte.into());
+        self.lines.push(line);
     }
     pub fn add_constant(&mut self, constant: Value) {
         self.constants.push(constant);
@@ -24,13 +26,18 @@ impl Chunk {
     pub fn disassemble(&self, name: char) {
         println!("== {} ==\n", name);
         let mut offset = 0;
-        while offset < self.code.len() {
+        while offset < self.bytecodes.len() {
             offset = self.disassemble_instruction(offset);
         }
     }
     fn disassemble_instruction(&self, offset: usize) -> usize {
+        if offset > 0 && self.lines[offset] == self.lines[offset - 1] {
+            print!("   | ");
+        } else {
+            print!("{:04} ", self.lines[offset]);
+        }
         print!("{:04} ", offset);
-        let opcode = Opcode::from(self.code[offset]);
+        let opcode = Opcode::from(self.bytecodes[offset]);
         match opcode {
             Opcode::OpReturn => self.simple_instruction(&opcode, offset),
             Opcode::OpConstant => self.constant_instruction(&opcode, offset),
@@ -45,9 +52,9 @@ impl Chunk {
         offset + 1
     }
     fn constant_instruction(&self, opcode: &Opcode, offset: usize) -> usize {
-        let constant_index = self.code[offset + 1];
-        print!("{:<16?} {:>4} '", opcode, constant_index);
-        println!("{}", self.constants[constant_index as usize]);
+        let constant_index = self.bytecodes[offset + 1];
+        print!("{:<16?} {:>4}", opcode, constant_index);
+        println!(" '{}'", self.constants[constant_index as usize]);
         offset + 2
     }
 }
