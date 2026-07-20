@@ -3,11 +3,11 @@ use crate::{
     opcode::Opcode,
 };
 
-pub type Value = i64;
+pub type Value = f64;
 pub type ByteResult = LoxResult<u8>;
 pub type ValueResult = LoxResult<Value>;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Chunk {
     bytecodes: Vec<u8>,
     constants: Vec<Value>,
@@ -30,11 +30,21 @@ impl Chunk {
                 msg: String::from("no bytecode in the chunk"),
             })
         } else {
-            Ok(self.bytecodes[byte_index])
+            if byte_index < self.bytecodes.len() {
+                Ok(self.bytecodes[byte_index])
+            } else {
+                Err(LoxError::VMError {
+                    msg: format!(
+                        "byte index {byte_index} is invalid as length of bytecodes is {}",
+                        self.bytecodes.len()
+                    ),
+                })
+            }
         }
     }
-    pub fn add_constant(&mut self, constant: Value) {
+    pub fn add_constant(&mut self, constant: Value) -> usize {
         self.constants.push(constant);
+        self.constants.len() - 1
     }
     pub fn read_constant(&self, constant_index: usize) -> ValueResult {
         if self.constants.is_empty() {
@@ -62,7 +72,7 @@ impl Chunk {
         print!("{:04} ", offset);
         let opcode = Opcode::try_from(self.bytecodes[offset])?;
         match opcode {
-            Opcode::OpConstant => self.constant_instruction(&opcode, offset),
+            Opcode::Constant => self.constant_instruction(&opcode, offset),
             _ => self.simple_instruction(&opcode, offset),
         }
     }
