@@ -32,137 +32,135 @@ impl VM {
         loop {
             let instruction = Opcode::try_from(self.read_current_byte()?)?;
             match instruction {
-                Opcode::OpConstant => {
+                Opcode::Constant => {
                     let constant = self.read_current_constant()?;
                     self.stack.push(constant);
                 }
-                Opcode::OpNil => {
+                Opcode::Nil => {
                     todo!()
                 }
-                Opcode::OpTrue => {
+                Opcode::True => {
                     todo!()
                 }
-                Opcode::OpFalse => {
+                Opcode::False => {
                     todo!()
                 }
-                Opcode::OpPop => {
+                Opcode::Pop => {
                     todo!()
                 }
-                Opcode::OpGetLocal => {
+                Opcode::GetLocal => {
                     todo!()
                 }
-                Opcode::OpSetLocal => {
+                Opcode::SetLocal => {
                     todo!()
                 }
-                Opcode::OpGetGlobal => {
+                Opcode::GetGlobal => {
                     todo!()
                 }
-                Opcode::OpDefineGlobal => {
+                Opcode::DefineGlobal => {
                     todo!()
                 }
-                Opcode::OpSetGlobal => {
+                Opcode::SetGlobal => {
                     todo!()
                 }
-                Opcode::OpGetUpvalue => {
+                Opcode::GetUpvalue => {
                     todo!()
                 }
-                Opcode::OpSetUpvalue => {
+                Opcode::SetUpvalue => {
                     todo!()
                 }
-                Opcode::OpGetProperty => {
+                Opcode::GetProperty => {
                     todo!()
                 }
-                Opcode::OpSetProperty => {
+                Opcode::SetProperty => {
                     todo!()
                 }
-                Opcode::OpGetSuper => {
+                Opcode::GetSuper => {
                     todo!()
                 }
-                Opcode::OpEqual => {
+                Opcode::Equal => {
                     todo!()
                 }
-                Opcode::OpGreater => {
+                Opcode::Greater => {
                     todo!()
                 }
-                Opcode::OpLess => {
+                Opcode::Less => {
                     todo!()
                 }
-                Opcode::OpAdd => {
+                Opcode::Add => {
                     if let Some(b) = self.stack.pop()
                         && let Some(a) = self.stack.pop()
                     {
                         self.stack.push(a + b);
                     }
                 }
-                Opcode::OpSubtract => {
+                Opcode::Subtract => {
                     if let Some(b) = self.stack.pop()
                         && let Some(a) = self.stack.pop()
                     {
                         self.stack.push(a - b);
                     }
                 }
-                Opcode::OpMultiply => {
+                Opcode::Multiply => {
                     if let Some(b) = self.stack.pop()
                         && let Some(a) = self.stack.pop()
                     {
                         self.stack.push(a * b);
                     }
                 }
-                Opcode::OpDivide => {
+                Opcode::Divide => {
                     if let Some(b) = self.stack.pop()
                         && let Some(a) = self.stack.pop()
                     {
                         self.stack.push(a / b);
                     }
                 }
-                Opcode::OpNot => {
+                Opcode::Not => {
                     todo!()
                 }
-                Opcode::OpNegate => {
-                    if let Some(value) = self.stack.pop() {
-                        self.stack.push(-value);
-                    }
-                }
-                Opcode::OpPrint => {
+                Opcode::Negate => {
                     todo!()
                 }
-                Opcode::OpJump => {
+                Opcode::Print => {
                     todo!()
                 }
-                Opcode::OpJumpIfFalse => {
+                Opcode::Jump => {
                     todo!()
                 }
-                Opcode::OpLoop => {
+                Opcode::JumpIfFalse => {
                     todo!()
                 }
-                Opcode::OpCall => {
+                Opcode::Loop => {
                     todo!()
                 }
-                Opcode::OpInvoke => {
+                Opcode::Call => {
                     todo!()
                 }
-                Opcode::OpSuperInvoke => {
+                Opcode::Invoke => {
                     todo!()
                 }
-                Opcode::OpClosure => {
+                Opcode::SuperInvoke => {
                     todo!()
                 }
-                Opcode::OpCloseUpValue => {
+                Opcode::Closure => {
                     todo!()
                 }
-                Opcode::OpReturn => {
+                Opcode::CloseUpValue => {
+                    todo!()
+                }
+                Opcode::Return => {
                     if let Some(value) = self.stack.pop() {
                         println!("{}", value);
                     }
                     break;
                 }
-                Opcode::OpClass => {
+                Opcode::Class => {
                     todo!()
                 }
-                Opcode::OpInherit => {
+                Opcode::Inherit => {
                     todo!()
                 }
-                Opcode::OpMethod => {
+                Opcode::Method => {
                     todo!()
                 }
             }

@@ -4,137 +4,137 @@ use crate::error::LoxError;
 #[derive(Debug, Clone, Copy)]
 pub enum Opcode {
     //> op-constant
-    OpConstant,
+    Constant,
     //< op-constant
     //> Types of Values literal-ops
-    OpNil,
-    OpTrue,
-    OpFalse,
+    Nil,
+    True,
+    False,
     //< Types of Values literal-ops
     //> Global Variables pop-op
-    OpPop,
+    Pop,
     //< Global Variables pop-op
     //> Local Variables get-local-op
-    OpGetLocal,
+    GetLocal,
     //< Local Variables get-local-op
     //> Local Variables set-local-op
-    OpSetLocal,
+    SetLocal,
     //< Local Variables set-local-op
     //> Global Variables get-global-op
-    OpGetGlobal,
+    GetGlobal,
     //< Global Variables get-global-op
     //> Global Variables define-global-op
-    OpDefineGlobal,
+    DefineGlobal,
     //< Global Variables define-global-op
     //> Global Variables set-global-op
-    OpSetGlobal,
+    SetGlobal,
     //< Global Variables set-global-op
     //> Closures upvalue-ops
-    OpGetUpvalue,
-    OpSetUpvalue,
+    GetUpvalue,
+    SetUpvalue,
     //< Closures upvalue-ops
     //> Classes and Instances property-ops
-    OpGetProperty,
-    OpSetProperty,
+    GetProperty,
+    SetProperty,
     //< Classes and Instances property-ops
     //> Superclasses get-super-op
-    OpGetSuper,
+    GetSuper,
     //< Superclasses get-super-op
     //> Types of Values comparison-ops
-    OpEqual,
-    OpGreater,
-    OpLess,
+    Equal,
+    Greater,
+    Less,
     //< Types of Values comparison-ops
     //> A Virtual Machine binary-ops
-    OpAdd,
-    OpSubtract,
-    OpMultiply,
-    OpDivide,
+    Add,
+    Subtract,
+    Multiply,
+    Divide,
     //> Types of Values not-op
-    OpNot,
+    Not,
     //< Types of Values not-op
     //< A Virtual Machine binary-ops
     //> A Virtual Machine negate-op
-    OpNegate,
+    Negate,
     //< A Virtual Machine negate-op
     //> Global Variables op-print
-    OpPrint,
+    Print,
     //< Global Variables op-print
     //> Jumping Back and Forth jump-op
-    OpJump,
+    Jump,
     //< Jumping Back and Forth jump-op
     //> Jumping Back and Forth jump-if-false-op
-    OpJumpIfFalse,
+    JumpIfFalse,
     //< Jumping Back and Forth jump-if-false-op
     //> Jumping Back and Forth loop-op
-    OpLoop,
+    Loop,
     //< Jumping Back and Forth loop-op
     //> Calls and Functions op-call
-    OpCall,
+    Call,
     //< Calls and Functions op-call
     //> Methods and Initializers invoke-op
-    OpInvoke,
+    Invoke,
     //< Methods and Initializers invoke-op
     //> Superclasses super-invoke-op
-    OpSuperInvoke,
+    SuperInvoke,
     //< Superclasses super-invoke-op
     //> Closures closure-op
-    OpClosure,
+    Closure,
     //< Closures closure-op
     //> Closures close-upvalue-op
-    OpCloseUpValue,
+    CloseUpValue,
     //< Closures close-upvalue-op
-    OpReturn,
+    Return,
     //> Classes and Instances class-op
-    OpClass,
+    Class,
     //< Classes and Instances class-op
     //> Superclasses inherit-op
-    OpInherit,
+    Inherit,
     //< Superclasses inherit-op
     //> Methods and Initializers method-op
-    OpMethod, //< Methods and Initializers method-op}
+    Method, //< Methods and Initializers method-op}
 }
 impl TryFrom<u8> for Opcode {
     type Error = LoxError;
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
-            0 => Ok(Self::OpConstant),
-            1 => Ok(Self::OpNil),
-            2 => Ok(Self::OpTrue),
-            3 => Ok(Self::OpFalse),
-            4 => Ok(Self::OpPop),
-            5 => Ok(Self::OpGetLocal),
-            6 => Ok(Self::OpSetLocal),
-            7 => Ok(Self::OpGetGlobal),
-            8 => Ok(Self::OpDefineGlobal),
-            9 => Ok(Self::OpSetGlobal),
-            10 => Ok(Self::OpGetUpvalue),
-            11 => Ok(Self::OpSetUpvalue),
-            12 => Ok(Self::OpGetProperty),
-            13 => Ok(Self::OpSetProperty),
-            14 => Ok(Self::OpGetSuper),
-            15 => Ok(Self::OpEqual),
-            16 => Ok(Self::OpGreater),
-            17 => Ok(Self::OpLess),
-            18 => Ok(Self::OpAdd),
-            19 => Ok(Self::OpSubtract),
-            20 => Ok(Self::OpMultiply),
-            21 => Ok(Self::OpDivide),
-            22 => Ok(Self::OpNot),
-            23 => Ok(Self::OpNegate),
-            24 => Ok(Self::OpPrint),
-            25 => Ok(Self::OpJump),
-            26 => Ok(Self::OpJumpIfFalse),
-            27 => Ok(Self::OpLoop),
-            28 => Ok(Self::OpCall),
-            29 => Ok(Self::OpInvoke),
-            30 => Ok(Self::OpSuperInvoke),
-            31 => Ok(Self::OpClosure),
-            32 => Ok(Self::OpCloseUpValue),
-            33 => Ok(Self::OpReturn),
-            34 => Ok(Self::OpClass),
-            35 => Ok(Self::OpInherit),
-            36 => Ok(Self::OpMethod),
+            0 => Ok(Self::Constant),
+            1 => Ok(Self::Nil),
+            2 => Ok(Self::True),
+            3 => Ok(Self::False),
+            4 => Ok(Self::Pop),
+            5 => Ok(Self::GetLocal),
+            6 => Ok(Self::SetLocal),
+            7 => Ok(Self::GetGlobal),
+            8 => Ok(Self::DefineGlobal),
+            9 => Ok(Self::SetGlobal),
+            10 => Ok(Self::GetUpvalue),
+            11 => Ok(Self::SetUpvalue),
+            12 => Ok(Self::GetProperty),
+            13 => Ok(Self::SetProperty),
+            14 => Ok(Self::GetSuper),
+            15 => Ok(Self::Equal),
+            16 => Ok(Self::Greater),
+            17 => Ok(Self::Less),
+            18 => Ok(Self::Add),
+            19 => Ok(Self::Subtract),
+            20 => Ok(Self::Multiply),
+            21 => Ok(Self::Divide),
+            22 => Ok(Self::Not),
+            23 => Ok(Self::Negate),
+            24 => Ok(Self::Print),
+            25 => Ok(Self::Jump),
+            26 => Ok(Self::JumpIfFalse),
+            27 => Ok(Self::Loop),
+            28 => Ok(Self::Call),
+            29 => Ok(Self::Invoke),
+            30 => Ok(Self::SuperInvoke),
+            31 => Ok(Self::Closure),
+            32 => Ok(Self::CloseUpValue),
+            33 => Ok(Self::Return),
+            34 => Ok(Self::Class),
+            35 => Ok(Self::Inherit),
+            36 => Ok(Self::Method),
             _ => Err(LoxError::VMError {
                 msg: format!("uknown opcode found : {}", value),
             }),
