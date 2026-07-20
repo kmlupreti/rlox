@@ -1,8 +1,9 @@
 use crate::{
     chunk::{ByteResult, Chunk, Value, ValueResult},
-    error::LoxResult,
+    error::{LoxError, LoxResult},
     opcode::Opcode,
 };
+use std::ops::Neg;
 
 #[derive(Default)]
 pub struct VM {
@@ -119,7 +120,13 @@ impl VM {
                     todo!()
                 }
                 Opcode::Negate => {
-                    todo!()
+                    if self.stack.is_empty() {
+                        return Err(LoxError::VMError {
+                            msg: String::from("failed to negate as stack is empty"),
+                        });
+                    } else {
+                        *self.stack.last_mut().unwrap() = self.stack.last().unwrap().neg();
+                    }
                 }
                 Opcode::Print => {
                     todo!()
